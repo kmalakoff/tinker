@@ -26,6 +26,7 @@ program
 program
   .command('install')
   .option('-d, --directory <name>', 'Directory')
+  .option('-f, --force', 'Force the operation')
   .option('-b, --bower', 'Bower only')
   .option('-n, --npm', 'NPM only')
   .description('Install modules')
@@ -36,6 +37,7 @@ program
 program
   .command('uninstall')
   .option('-d, --directory <name>', 'Directory')
+  .option('-f, --force', 'Force the operation')
   .option('-b, --bower', 'Bower only')
   .option('-n, --npm', 'NPM only')
   .description('Install modules')
@@ -46,6 +48,7 @@ program
 program
   .command('on <glob>')
   .option('-d, --directory <name>', 'Directory')
+  .option('-f, --force', 'Force the operation')
   .option('-b, --bower', 'Bower only')
   .option('-n, --npm', 'NPM only')
   .description('Enable tinker for specified modules')
@@ -56,6 +59,7 @@ program
 program
   .command('off <glob>')
   .option('-d, --directory <name>', 'Directory')
+  .option('-f, --force', 'Force the operation')
   .option('-b, --bower', 'Bower only')
   .option('-n, --npm', 'NPM only')
   .description('Disable tinker for specified modules')

@@ -21,9 +21,9 @@ module.exports = class Module
       return callback(err) if err
       if is_installed
         if options.force
-          console.log "Git #{@name} exists in #{@relativePath()}. Forcing".yellow
+          console.log "Git: #{@name} exists in #{@relativePath()}. Forcing".yellow
         else
-          (console.log "Git #{@name} exists in #{@relativePath()}. Skipping".green; return callback())
+          (console.log "Git: #{@name} exists in #{@relativePath()}. Skipping".green; return callback())
 
       Wrench.rmdirSyncRecursive(@path, true)
       @repo.clone callback
@@ -36,9 +36,9 @@ module.exports = class Module
       return callback(err) if err
       if is_installed
         if options.force
-          console.log "Module #{@name} exists in #{@relativePath()}. Forcing".yellow
+          console.log "Module: #{@name} exists in #{@relativePath()}. Forcing".yellow
         else
-          (console.log "Module #{@name} exists in #{@relativePath()}. Skipping".green; return callback())
+          (console.log "Module: #{@name} exists in #{@relativePath()}. Skipping".green; return callback())
 
       Wrench.rmdirSyncRecursive(@path, true)
       @owner.installModule @, callback

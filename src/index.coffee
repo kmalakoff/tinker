@@ -16,12 +16,12 @@ module.exports = class Tinker
 
   @on: (glob, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
-    Utils.modulesExec glob, options, ((module, callback) -> module.on callback), (err) ->
+    Utils.modulesExec glob, options, ((module, callback) -> module.on options, callback), (err) ->
       console.log err.toString().red if err
       callback(err)
 
   @off: (glob, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
-    Utils.modulesExec glob, options, ((module, callback) -> module.off callback), (err) ->
+    Utils.modulesExec glob, options, ((module, callback) -> module.off options, callback), (err) ->
       console.log err.toString().red if err
       callback(err)

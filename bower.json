@@ -1,0 +1,40 @@
+{
+  "name": "tinker",
+  "version": "0.0.1",
+  "main": "tinker.js",
+  "ignore": [
+    "**/.*",
+    "components",
+    "doc",
+    "media",
+    "node_modules",
+    "packages",
+    "test",
+    "vendor",
+    "bower_components",
+    "tests"
+  ],
+  "homepage": "https://github.com/kmalakoff/tinker",
+  "authors": [
+    "Kevin Malakoff <kmalakoff@gmail.com>"
+  ],
+  "description": "Knockback.js provides Knockout.js magic for Backbone.js Models and Collections",
+  "keywords": [
+    "tinker",
+    "tinkerjs",
+    "git",
+    "node",
+    "bower",
+    "component"
+  ],
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "dependencies": {
+    "underscore": ">=1.1.7"
+  },
+
+  "license": "MIT"
+}

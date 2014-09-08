@@ -1,0 +1,71 @@
+{
+  "name": "tinker",
+  "version": "0.0.1",
+  "description": "Tinker with your bower and node modules",
+  "main": "tinker.js",
+  "author": {
+    "name": "Kevin Malakoff",
+    "url": "https://github.com/kmalakoff"
+  },
+  "keywords": [
+    "tinker",
+    "tinkerjs",
+    "git",
+    "node",
+    "bower",
+    "component"
+  ],
+  "url": "http://kmalakoff.github.com/tinker/",
+  "homepage": "http://kmalakoff.github.com/tinker/",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/kmalakoff/tinker.git"
+  },
+  "scripts": {
+    "test": "gulp test",
+    "docs": "./node_modules/.bin/codo -n Tinker.js -o doc src/."
+  },
+  "dependencies": {
+    "js-git": "*",
+    "underscore": "*"
+  },
+  "devDependencies": {
+    "async": "*",
+    "chai": "*",
+    "codo": "2.x",
+    "coffee-loader": "*",
+    "coffee-script": "*",
+    "event-stream": "*",
+    "gulp": "*",
+    "gulp-browserify": "*",
+    "gulp-compile-js": "*",
+    "gulp-concat": "*",
+    "gulp-header": "*",
+    "gulp-mocha": "*",
+    "gulp-mocha-phantomjs": "*",
+    "gulp-rename": "*",
+    "gulp-require-src": "*",
+    "gulp-shell": "*",
+    "gulp-uglify": "*",
+    "gulp-util": "*",
+    "gulp-webpack-config": "*",
+    "gulp-wrap-amd-infer": "*",
+    "gulp-zip": "*",
+    "imports-loader": "^0.6.3",
+    "jquery": "*",
+    "karma": "*",
+    "karma-chai": "*",
+    "karma-chrome-launcher": "*",
+    "karma-cli": "*",
+    "karma-coffee-preprocessor": "*",
+    "karma-firefox-launcher": "*",
+    "karma-mocha": "*",
+    "karma-phantomjs-launcher": "*",
+    "karma-safari-launcher": "*",
+    "karma-spec-reporter": "*",
+    "mocha": "*",
+    "queue-async": "*",
+    "webpack": "*",
+    "wrench": "*"
+  }
+}

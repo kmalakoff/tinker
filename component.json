@@ -1,0 +1,23 @@
+{
+  "name": "tinker",
+  "author": "Kevin Malakoff (https://github.com/kmalakoff)",
+  "version": "0.0.1",
+  "description": "Tinker with your bower and node modules",
+  "keywords": [
+    "tinker",
+    "tinkerjs",
+    "git",
+    "node",
+    "bower",
+    "component"
+  ],
+  "repo": "kmalakoff/tinker",
+  "dependencies": {
+    "jashkenas/underscore": "*"
+  },
+  "main": "tinker.js",
+  "scripts": [
+    "tinker.js"
+  ],
+  "license": "MIT"
+}

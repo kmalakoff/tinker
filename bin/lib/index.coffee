@@ -12,7 +12,7 @@ module.exports = class TinkerCLI
     directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
     console.log "tinker on #{glob}".black
 
-    Utils.packages directory, (err, packages) ->
+    Utils.packages directory, options, (err, packages) ->
       return callback(err) if err
 
       modules = []

@@ -11,7 +11,7 @@ module.exports = class Module
   constructor: (options) ->
     @[key] = value for key, value of _.pick(options, PROPERTIES)
     throw new Error "Module missing #{key}" for key in PROPERTIES when not @hasOwnProperty(key)
-    @repo = new GitRepo({path: @path, url: @url or @package_url})
+    @repo = new GitRepo({path: @path, url: @package_url or @url})
 
   on: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

@@ -36,6 +36,8 @@ program
 program
   .command('off <glob>')
   .option('-d, --directory <name>', 'Directory')
+  .option('-b, --bower', 'Bower only')
+  .option('-n, --npm', 'NPM only')
   .description('Disable tinker for specified modules')
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)

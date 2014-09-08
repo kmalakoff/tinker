@@ -1,8 +1,16 @@
 _ = require 'underscore'
 
-PROPERTIES = ['name', 'path', 'url', 'package_url']
+PROPERTIES = ['name', 'root', 'path', 'url', 'package_url']
 
 module.exports = class Module
   constructor: (options) ->
     @[key] = value for key, value of _.pick(options, PROPERTIES)
     throw new Error "Module missing #{key}" for key in PROPERTIES when not @hasOwnProperty(key)
+
+  on: (callback) ->
+    console.log "Tinkering on #{@name} (#{@path.replace("#{@root}/", '')})"
+    callback()
+
+  off: (callback) ->
+    console.log "Tinkering off #{@name} (#{@path.replace("#{@root}/", '')})"
+    callback()

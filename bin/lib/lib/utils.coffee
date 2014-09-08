@@ -1,5 +1,6 @@
 path = require 'path'
 _ = require 'underscore'
+Queue = require 'queue-async'
 Vinyl = require 'vinyl-fs'
 es = require 'event-stream'
 jsonFileParse = require './json_file_parse'
@@ -32,3 +33,16 @@ module.exports = class Utils
           info = _.find(MODULES, (info, name) -> info.package_name is package_name)
           packages.push new info.Class(file)
         callback(null, packages)
+
+  @modules: (directory, glob, options, callback) ->
+    Utils.packages directory, options, (err, packages) ->
+      return callback(err) if err
+
+      modules = []
+      queue = new Queue()
+      for pkg in packages
+        do (pkg) -> queue.defer (callback) ->
+          pkg.modules glob, (err, _modules) -> modules = modules.concat(_modules); callback(err)
+      queue.await (err) ->
+        callback(err) if err
+        callback(null, modules)

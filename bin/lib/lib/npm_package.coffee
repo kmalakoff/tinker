@@ -19,10 +19,11 @@ module.exports = class NPMPackage
     @contents.dependencies or= {}
 
   modules: (glob, callback) ->
+    directory = path.dirname(@path)
     collectModules = (data, glob) =>
       results = []
       if minimatch(name = (data.package?.name or ''), glob)
-        results.push new Module({name, path: data.path, url: data.package?.url, package_url: @contents.dependencies[name]})
+        results.push new Module({name, path: data.path, root: directory, url: data.package?.url, package_url: @contents.dependencies[name]})
       results = results.concat(collectModules(child, glob)) for child in (data.children or [])
       return results
 

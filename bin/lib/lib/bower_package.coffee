@@ -18,13 +18,14 @@ module.exports = class BowerPackage
     @contents.dependencies or= {}
 
   modules: (glob, callback) ->
-    directory = path.join(path.dirname(@path), 'bower_components')
-    fs.readdir directory, (err, files) =>
+    directory = path.dirname(@path)
+
+    fs.readdir path.join(directory, 'bower_components'), (err, files) =>
       return callback(err) if err
 
       es.readArray((file for file in files when minimatch(file, glob)))
         .pipe es.map (file_name, callback) =>
-          module_path = path.join(directory, file_name)
+          module_path = path.join(directory, 'bower_components', file_name)
           fs.exists path.join(module_path, 'bower.json'), (exists) =>
             return callback() unless exists
 
@@ -32,6 +33,6 @@ module.exports = class BowerPackage
             bower.commands.lookup(file_name)
               .on('error', callback)
               .on 'end', (info) =>
-                callback(null, new Module({name: file_name, path: module_path, url: url = info?.url, package_url: @contents.dependencies[file_name]}))
+                callback(null, new Module({name: file_name, path: module_path, root: directory, url: url = info?.url, package_url: @contents.dependencies[file_name]}))
 
         .pipe(es.writeArray(callback))

@@ -249,7 +249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	_ = __webpack_require__(2);
 
-	PROPERTIES = ['name', 'path', 'url', 'package_url'];
+	PROPERTIES = ['name', 'root', 'path', 'url', 'package_url'];
 
 	module.exports = Module = (function() {
 	  function Module(options) {
@@ -266,6 +266,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 	  }
+
+	  Module.prototype.on = function(callback) {
+	    console.log("Tinkering on " + this.name + " (" + (this.path.replace("" + this.root + "/", '')) + ")");
+	    return callback();
+	  };
+
+	  Module.prototype.off = function(callback) {
+	    console.log("Tinkering off " + this.name + " (" + (this.path.replace("" + this.root + "/", '')) + ")");
+	    return callback();
+	  };
 
 	  return Module;
 

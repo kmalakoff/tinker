@@ -24,6 +24,26 @@ program
   .version('0.0.1')
 
 program
+  .command('install')
+  .option('-d, --directory <name>', 'Directory')
+  .option('-b, --bower', 'Bower only')
+  .option('-n, --npm', 'NPM only')
+  .description('Install modules')
+  .action (glob)->
+    options = CommanderUtils.extractCommandOptions(program)
+    (require '../src').install options, -> process.exit(0)
+
+program
+  .command('uninstall')
+  .option('-d, --directory <name>', 'Directory')
+  .option('-b, --bower', 'Bower only')
+  .option('-n, --npm', 'NPM only')
+  .description('Install modules')
+  .action (glob)->
+    options = CommanderUtils.extractCommandOptions(program)
+    (require '../src').uninstall options, -> process.exit(0)
+
+program
   .command('on <glob>')
   .option('-d, --directory <name>', 'Directory')
   .option('-b, --bower', 'Bower only')
@@ -31,7 +51,7 @@ program
   .description('Enable tinker for specified modules')
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
-    (require './lib').on glob, options, -> process.exit(0)
+    (require '../src').on glob, options, -> process.exit(0)
 
 program
   .command('off <glob>')
@@ -41,7 +61,7 @@ program
   .description('Disable tinker for specified modules')
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
-    (require './lib').off glob, options, -> process.exit(0)
+    (require '../src').off glob, options, -> process.exit(0)
 
 ###
 # Unknown

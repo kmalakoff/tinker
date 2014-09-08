@@ -4,7 +4,7 @@ es = require 'event-stream'
 
 gulp = require 'gulp'
 gutil = require 'gulp-util'
-webpack = require 'gulp-webpack-config'
+coffee = require 'gulp-coffee'
 rename = require 'gulp-rename'
 uglify = require 'gulp-uglify'
 header = require 'gulp-header'
@@ -19,26 +19,12 @@ HEADER = module.exports = """
   Dependencies: js-git and Underscore.js.
 */\n
 """
-LIBRARY_FILES = require('./config/files').libraries
 
 gulp.task 'build', buildLibraries = (callback) ->
-  gulp.src('config/builds/library/**/*.webpack.config.coffee', {read: false, buffer: false})
-    .pipe(webpack({no_delete: true}))
+  gulp.src('src/**/*.coffee')
+    .pipe(coffee({bare: true}))
     .pipe(header(HEADER, {pkg: require('./package.json')}))
-    .pipe(gulp.dest('.'))
-    .on('end', callback)
-  return # promises workaround: https://github.com/gulpjs/gulp/issues/455
-
-gulp.task 'watch', ['build'], ->
-  gulp.watch './src/**/*.coffee', -> buildLibraries(->)
-  return # promises workaround: https://github.com/gulpjs/gulp/issues/455
-
-gulp.task 'minify', ['build'], (callback) ->
-  gulp.src(['*.js', '!*.min.js', '!_temp/**/*.js', '!node_modules/'])
-    .pipe(uglify())
-    .pipe(rename({suffix: '.min'}))
-    .pipe(header(HEADER, {pkg: require('./package.json')}))
-    .pipe(gulp.dest((file) -> file.base))
+    .pipe(gulp.dest('lib'))
     .on('end', callback)
   return # promises workaround: https://github.com/gulpjs/gulp/issues/455
 
@@ -51,15 +37,4 @@ testNode = (callback) ->
     .pipe es.writeArray callback
   return # promises workaround: https://github.com/gulpjs/gulp/issues/455
 
-testBrowsers = (callback) ->
-  tags = ("@#{tag.replace(/^[-]+/, '')}" for tag in process.argv.slice(3)).join(' ')
-
-  gutil.log "Running Browser tests #{tags}"
-  (require './config/karma/run')({tags: tags}, callback)
-  return # promises workaround: https://github.com/gulpjs/gulp/issues/455
-
-gulp.task 'test-node', ['minify'], testNode
-gulp.task 'test-browsers', ['minify'], testBrowsers
-gulp.task 'test', ['minify'], (callback) ->
-  Async.series [testNode, testBrowsers], (err) -> process.exit(if err then 1 else 0)
-  return # promises workaround: https://github.com/gulpjs/gulp/issues/455
+gulp.task 'test', ['build'], testNode

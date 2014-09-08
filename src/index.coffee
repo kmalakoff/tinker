@@ -1,24 +1,27 @@
-###
-  tinker.js 0.0.1
-  Copyright (c) 2013-2014 Kevin Malakoff
-  License: MIT (http://www.opensource.org/licenses/mit-license.php)
-  Source: https://github.com/kmalakoff/tinker
-  Dependencies: js-git and Underscore.js.
-###
+colors = require 'colors'
+Utils = require './lib/utils'
 
-_ = require 'underscore'
+module.exports = class Tinker
+  @install: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    Utils.packagesExec options, ((pkg, callback) -> pkg.install callback), (err) ->
+      console.log err.toString().red if err
+      callback(err)
 
-module.exports = Tinker = require './core' # avoid circular dependencies
-publish =
-  configure: require './lib/configure'
+  @uninstall: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    Utils.packagesExec options, ((pkg, callback) -> pkg.uninstall callback), (err) ->
+      console.log err.toString().red if err
+      callback(err)
 
-  Utils: require './lib/utils'
-  Queue: require './lib/queue'
-  Module: require './lib/module'
+  @on: (glob, options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 2
+    Utils.modulesExec glob, options, ((module, callback) -> module.on callback), (err) ->
+      console.log err.toString().red if err
+      callback(err)
 
-  _: _
-_.extend(Tinker, publish)
-
-# re-expose modules
-Tinker.modules =
-  underscore: _
+  @off: (glob, options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 2
+    Utils.modulesExec glob, options, ((module, callback) -> module.off callback), (err) ->
+      console.log err.toString().red if err
+      callback(err)

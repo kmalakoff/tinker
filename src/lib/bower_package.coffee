@@ -6,8 +6,11 @@ minimatch = require 'minimatch'
 File = require 'vinyl'
 jsonFileParse = require './json_file_parse'
 Queue = require 'queue-async'
+Module = require './module'
+
 bower = require 'bower'
-{Module} = require 'tinker'
+spawn = require './spawn'
+Wrench = require 'wrench'
 
 PROPERTIES = ['path', 'contents']
 
@@ -18,14 +21,12 @@ module.exports = class BowerPackage
     @contents.dependencies or= {}
 
   modules: (glob, callback) ->
-    directory = path.dirname(@path)
-
-    fs.readdir path.join(directory, 'bower_components'), (err, files) =>
+    fs.readdir @componentDirectory(), (err, files) =>
       return callback(err) if err
 
       es.readArray((file for file in files when minimatch(file, glob)))
         .pipe es.map (file_name, callback) =>
-          module_path = path.join(directory, 'bower_components', file_name)
+          module_path = path.join(@componentDirectory(), file_name)
           fs.exists path.join(module_path, 'bower.json'), (exists) =>
             return callback() unless exists
 
@@ -33,6 +34,14 @@ module.exports = class BowerPackage
             bower.commands.lookup(file_name)
               .on('error', callback)
               .on 'end', (info) =>
-                callback(null, new Module({name: file_name, path: module_path, root: directory, url: url = info?.url, package_url: @contents.dependencies[file_name]}))
+                callback(null, new Module({owner: @, name: file_name, path: module_path, root: @componentDirectory(), url: url = info?.url, package_url: @contents.dependencies[file_name]}))
 
         .pipe(es.writeArray(callback))
+
+  install: (callback) -> spawn 'bower install', {cwd: @baseDirectory()}, callback
+  uninstall: (callback) -> Wrench.rmdirSyncRecursive(@componentDirectory(), true); callback()
+
+  installModule: (module, callback) -> spawn "bower install #{module.name}", {cwd: @baseDirectory()}, callback
+
+  baseDirectory: -> path.dirname(@path)
+  componentDirectory: -> path.join(path.dirname(@path), 'bower_components')

@@ -86,6 +86,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  configure: __webpack_require__(4),
 	  Utils: __webpack_require__(5),
 	  Queue: __webpack_require__(6),
+	  Module: __webpack_require__(7),
 	  _: _
 	};
 
@@ -236,6 +237,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 
 	  return Queue;
+
+	})();
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Module, PROPERTIES, _;
+
+	_ = __webpack_require__(2);
+
+	PROPERTIES = ['name', 'path', 'url', 'package_url'];
+
+	module.exports = Module = (function() {
+	  function Module(options) {
+	    var key, value, _i, _len, _ref;
+	    _ref = _.pick(options, PROPERTIES);
+	    for (key in _ref) {
+	      value = _ref[key];
+	      this[key] = value;
+	    }
+	    for (_i = 0, _len = PROPERTIES.length; _i < _len; _i++) {
+	      key = PROPERTIES[_i];
+	      if (!this.hasOwnProperty(key)) {
+	        throw new Error("Module missing " + key);
+	      }
+	    }
+	  }
+
+	  return Module;
 
 	})();
 

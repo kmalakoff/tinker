@@ -14,6 +14,7 @@ publish =
 
   Utils: require './lib/utils'
   Queue: require './lib/queue'
+  Module: require './lib/module'
 
   _: _
 _.extend(Tinker, publish)

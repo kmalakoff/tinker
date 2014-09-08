@@ -1,0 +1,9 @@
+{
+  "name": "tinker-test-app",
+  "version": "0.0.1",
+  "main": "tinker-test-app.js",
+  "description": "Tinker with your bower and node modules",
+  "dependencies": {
+    "tinker-test": "git+https://github.com/kmalakoff/tinker-test"
+  }
+}

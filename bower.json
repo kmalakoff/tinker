@@ -18,7 +18,7 @@
   "authors": [
     "Kevin Malakoff <kmalakoff@gmail.com>"
   ],
-  "description": "Knockback.js provides Knockout.js magic for Backbone.js Models and Collections",
+  "description": "Tinker with your bower and node modules",
   "keywords": [
     "tinker",
     "tinkerjs",

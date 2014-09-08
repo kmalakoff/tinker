@@ -31,6 +31,7 @@ module.exports = class BowerPackage
             callback = _.once(callback)
             bower.commands.lookup(file_name)
               .on('error', callback)
-              .on 'end', (info) => callback(null, new Module({name: file_name, path: module_path, url: info?.url, package_url: @contents.dependencies[file_name]}))
+              .on 'end', (info) =>
+                callback(null, new Module({name: file_name, path: module_path, url: url = info?.url, package_url: @contents.dependencies[file_name]}))
 
         .pipe(es.writeArray(callback))

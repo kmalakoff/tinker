@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "js-git": "*",
+    "read-package-tree": "^2.0.0",
     "underscore": "*"
   },
   "devDependencies": {

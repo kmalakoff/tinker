@@ -1,5 +1,4 @@
 Async = require 'async'
-Utils = require './package/utils'
 Package = require './package/package'
 
 module.exports = class Tinker

@@ -13,7 +13,7 @@ module.exports = class Utils extends (require './index')
 
       collectModules = (data) =>
         results = []
-        results.push new Module({name: (data.package?.name or ''), path: data.path, root: Utils.moduleDirectory(pkg), git_url: data.package?.url})
+        results.push new Module({name: (data.package?.name or ''), path: data.path, root: Utils.moduleDirectory(pkg), git_url: data.package.repository?.url})
         results = results.concat(collectModules(child)) for child in (data.children or [])
         return results
 

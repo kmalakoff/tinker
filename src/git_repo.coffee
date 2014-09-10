@@ -23,6 +23,8 @@ module.exports = class GitRepo extends (require 'backbone').Model
   ensureCached: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
+    (console.log "Missing git_url"; return callback()) unless @get('git_url')
+
     fs.exists @cacheDirectory(), (exists) =>
       return callback() if exists and not options.force
 

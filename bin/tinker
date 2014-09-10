@@ -1,6 +1,7 @@
 #!/usr/bin/env coffee
 
 program = require 'commander'
+colors = require 'colors'
 
 process.bin = process.title = 'tinker'
 
@@ -20,37 +21,42 @@ class CommanderUtils
       (options[key] = program[key] if program.hasOwnProperty(key))
     return options
 
+program.constructor::defaultOptions = ->
+  @
+    .option('-d, --directory <name>', 'Directory')
+    .option('-f, --force', 'Force the operation')
+    .option('-b, --bower', 'Bower only')
+    .option('-n, --npm', 'NPM only')
+    .option('-c, --component', 'Component.io only')
+
 program
   .version('0.0.1')
 
 program
   .command('install')
-  .option('-d, --directory <name>', 'Directory')
-  .option('-f, --force', 'Force the operation')
-  .option('-b, --bower', 'Bower only')
-  .option('-n, --npm', 'NPM only')
   .description('Install modules')
+  .defaultOptions()
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
-    (require '../src').install options, -> process.exit(0)
+    (require '../src').install options, (err) ->
+      message = "tinker install #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      if err then console.log(message.red) else console.log(message.green)
+      process.exit(0)
 
 program
   .command('uninstall')
-  .option('-d, --directory <name>', 'Directory')
-  .option('-f, --force', 'Force the operation')
-  .option('-b, --bower', 'Bower only')
-  .option('-n, --npm', 'NPM only')
+  .defaultOptions()
   .description('Install modules')
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
-    (require '../src').uninstall options, -> process.exit(0)
+    (require '../src').uninstall options, (err) ->
+      message = "tinker uninstall #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      if err then console.log(message.red) else console.log(message.green)
+      process.exit(0)
 
 program
   .command('on <glob>')
-  .option('-d, --directory <name>', 'Directory')
-  .option('-f, --force', 'Force the operation')
-  .option('-b, --bower', 'Bower only')
-  .option('-n, --npm', 'NPM only')
+  .defaultOptions()
   .description('Enable tinker for specified modules')
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
@@ -58,10 +64,7 @@ program
 
 program
   .command('off <glob>')
-  .option('-d, --directory <name>', 'Directory')
-  .option('-f, --force', 'Force the operation')
-  .option('-b, --bower', 'Bower only')
-  .option('-n, --npm', 'NPM only')
+  .defaultOptions()
   .description('Disable tinker for specified modules')
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)

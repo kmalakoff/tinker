@@ -3,7 +3,14 @@ _ = require 'underscore'
 
 module.exports = (cmd, options={}, callback) ->
   [options, callback] = [{}, options] if arguments.length is 2
-  done = _.after(callback = _.once(callback), 3) # make sure all processes end or any error is handled
+
+  done = callback
+  was_called = false; call_count = 3
+  callback = (err) ->
+    return if was_called
+    (was_called = true; return done(err)) if err
+    return if --call_count > 0
+    was_called = true; return done()
 
   cmd_parts = cmd.split(' ')
   args = [cmd_parts.shift(), cmd_parts]
@@ -14,9 +21,9 @@ module.exports = (cmd, options={}, callback) ->
   child = spawn.apply(null, args)
   child.stderr.on 'error', callback
   child.stderr.on 'data', (chunk) => process.stdout.write(chunk.toString())
-  child.stderr.on 'end', done
+  child.stderr.on 'end', callback
   child.stdout.on 'error', callback
   child.stdout.on 'data', (chunk) => process.stdout.write(chunk.toString())
-  child.stdout.on 'end', done
+  child.stdout.on 'end', callback
   child.on 'error', callback
-  child.on 'exit', -> done()
+  child.on 'exit', -> callback()

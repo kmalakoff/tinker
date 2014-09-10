@@ -13,19 +13,16 @@ rpt = require 'read-package-tree'
 spawn = require '../lib/spawn'
 Wrench = require 'wrench'
 
-PROPERTIES = ['path', 'contents']
-
 module.exports = class NPMPackage extends (require 'backbone').Model
-  constructor: (options) ->
-    @[key] = value for key, value of _.pick(options, PROPERTIES)
-    throw new Error "Module missing #{key}" for key in PROPERTIES when not @hasOwnProperty(key)
-    @contents.dependencies or= {}
+  model_name: 'NPMPackage'
+  sync: (require 'backbone-orm').sync(NPMPackage)
 
   modules: (glob, callback) ->
     collectModules = (data, glob) =>
       results = []
       if minimatch(name = (data.package?.name or ''), glob)
-        results.push new Module({owner: @, name, path: data.path, root: @componentDirectory(), url: data.package?.url, package_url: @contents.dependencies[name]})
+        contents = @get('contents')
+        results.push new Module({owner: @, name, path: data.path, root: @componentDirectory(), url: data.package?.url, package_url: (contents.dependencies or {})[name]})
       results = results.concat(collectModules(child, glob)) for child in (data.children or [])
       return results
 
@@ -36,5 +33,5 @@ module.exports = class NPMPackage extends (require 'backbone').Model
 
   installModule: (module, callback) -> spawn "npm install #{module.name}", {cwd: @baseDirectory()}, callback
 
-  baseDirectory: -> path.dirname(@path)
-  componentDirectory: -> path.join(path.dirname(@path), 'node_modules')
+  baseDirectory: -> path.dirname(@get('path'))
+  componentDirectory: -> path.join(path.dirname(@get('path')), 'node_modules')

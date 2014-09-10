@@ -5,7 +5,7 @@ GitRepo = require '../git/repo'
 Wrench = require 'wrench'
 colors = require 'colors'
 
-PROPERTIES = ['name', 'root', 'path', 'url', 'package_url', 'owner']
+PROPERTIES = ['name', 'root', 'path', 'url', 'owner']
 
 module.exports = class Module extends (require 'backbone').Model
   constructor: (options) ->

@@ -1,17 +1,21 @@
+fs = require 'fs'
 path = require 'path'
+_ = require 'underscore'
+es = require 'event-stream'
+bower = require 'bower'
 Wrench = require 'wrench'
 
-BaseUtils = require './base'
 spawn = require '../../lib/spawn'
+Module = require '../module'
 
-module.exports = class Utils extends BaseUtils
+module.exports = class Utils extends (require './base')
   @loadModules: (pkg, callback) ->
     module_directory = Utils.moduleDirectory(pkg)
 
     fs.readdir module_directory, (err, files) =>
-      return callback(err) if err
+      return callback() if err # does not exist
 
-      es.readArray((file for file in files when minimatch(file, glob)))
+      es.readArray(files)
         .pipe es.map (file_name, callback) =>
           module_path = path.join(module_directory, file_name)
           fs.exists path.join(module_path, 'bower.json'), (exists) =>
@@ -21,14 +25,13 @@ module.exports = class Utils extends BaseUtils
             bower.commands.lookup(file_name)
               .on('error', callback)
               .on 'end', (info) =>
-                contents = @get('contents')
-                callback(null, new Module({owner: pkg, name: file_name, path: module_path, root: Utils.moduleDirectory(pkg), url: url = info?.url, package_url: (contents.dependencies or {})[file_name]}))
+                callback(null, new Module({owner: pkg, name: file_name, path: module_path, root: Utils.moduleDirectory(pkg), url: url = info?.url}))
 
         .pipe(es.writeArray(callback))
 
-  @install: (pkg, callback) -> spawn 'bower install', BaseUtils.cwd(pkg), callback
+  @install: (pkg, callback) -> spawn 'bower install', Utils.cwd(pkg), callback
   @uninstall: (pkg, callback) -> Wrench.rmdirSyncRecursive(Utils.moduleDirectory(pkg), true); callback()
 
-  @installModule: (pkg, module, callback) -> spawn "bower install #{module.name}", BaseUtils.cwd(pkg), callback
+  @installModule: (pkg, module, callback) -> spawn "bower install #{module.name}", Utils.cwd(pkg), callback
 
-  @moduleDirectory: (pkg) -> path.join(BaseUtils.root(pkg), 'bower_components')
+  @moduleDirectory: (pkg) -> path.join(Utils.root(pkg), 'bower_components')

@@ -23,7 +23,6 @@ module.exports = class Package extends (require 'backbone').Model
   @TYPES = [
     {type: 'npm', file_name: 'package.json'}
     {type: 'bower', file_name: 'bower.json'}
-    # {type: 'component', file_name: 'component.json'}
   ]
 
   @load: (options, callback) ->
@@ -49,7 +48,9 @@ module.exports = class Package extends (require 'backbone').Model
     info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
     new Package({type: info.type, path: file.path}).save (err, pkg) ->
       return callback(err) if err
-      callback(null, pkg)
+      pkg.loadModules (err) ->
+        return callback(err) if err
+        callback(null, pkg)
 
   loadModules: (callback) -> Utils.call(@, 'loadModules', arguments)
   install: (callback) -> Utils.call(@, 'install', arguments)

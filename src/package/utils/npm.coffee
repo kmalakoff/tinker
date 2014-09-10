@@ -2,24 +2,22 @@ path = require 'path'
 Wrench = require 'wrench'
 rpt = require 'read-package-tree'
 
-BaseUtils = require './base'
 spawn = require '../../lib/spawn'
+Module = require '../module'
 
-module.exports = class Utils extends BaseUtils
+module.exports = class Utils extends (require './base')
   @loadModules: (pkg, callback) ->
-    collectModules = (data, glob) =>
+    collectModules = (data) =>
       results = []
-      if minimatch(name = (data.package?.name or ''), glob)
-        contents = @get('contents')
-        results.push new Module({owner: @, name, path: data.path, root: @componentDirectory(), url: data.package?.url, package_url: (contents.dependencies or {})[name]})
-      results = results.concat(collectModules(child, glob)) for child in (data.children or [])
+      results.push new Module({owner: pkg, name: (data.package?.name or ''), path: data.path, root: Utils.moduleDirectory(pkg), url: data.package?.url})
+      results = results.concat(collectModules(child)) for child in (data.children or [])
       return results
 
-    rpt @baseDirectory(), (err, data) => callback(null, collectModules(data, glob))
+    rpt Utils.root(pkg), (err, data) => callback(null, collectModules(data))
 
-  @install: (pkg, callback) -> spawn 'npm install', BaseUtils.cwd(pkg), callback
+  @install: (pkg, callback) -> spawn 'npm install', Utils.cwd(pkg), callback
   @uninstall: (pkg, callback) -> Wrench.rmdirSyncRecursive(Utils.moduleDirectory(pkg), true); callback()
 
-  @installModule: (pkg, module, callback) -> spawn "npm install #{module.name}", BaseUtils.cwd(pkg), callback
+  @installModule: (pkg, module, callback) -> spawn "npm install #{module.name}", Utils.cwd(pkg), callback
 
-  @moduleDirectory: (pkg) -> path.join(BaseUtils.root(pkg), 'node_modules')
+  @moduleDirectory: (pkg) -> path.join(Utils.root(pkg), 'node_modules')

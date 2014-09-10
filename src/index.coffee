@@ -3,7 +3,7 @@ Async = require 'async'
 
 Package = require './package'
 Module = require './module'
-GitRepo = require './git_repo'
+GitUtils = require './lib/git_utils'
 
 Utils = require './lib/utils'
 
@@ -35,7 +35,7 @@ module.exports = class Tinker
       Module.findByGlob glob, options, (err, modules) ->
         return callback(err) if err
         return callback(new Error "No modules found for glob #{glob}") if modules.length is 0
-        Async.each modules, ((module, callback) -> module.tinkerOn callback), callback
+        Async.eachSeries modules, ((module, callback) -> module.tinkerOn callback), callback
 
   @off: (glob, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
@@ -45,4 +45,11 @@ module.exports = class Tinker
       Module.findByGlob glob, options, (err, modules) ->
         return callback(err) if err
         return callback(new Error "No modules found for glob #{glob}") if modules.length is 0
-        Async.each modules, ((module, callback) -> module.tinkerOff callback), callback
+        Async.eachSeries modules, ((module, callback) -> module.tinkerOff callback), callback
+
+  @cache: (action, options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 2
+
+    switch action
+      when 'clear', 'clean' then return GitUtils.cacheClear(options, callback)
+      else return callback(new Error "Unrecognized cache action '#{action}'")

@@ -76,6 +76,16 @@ program
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
+program
+  .command('cache <action>')
+  .description('Performs an action on the cache')
+  .action (action)->
+    options = CommanderUtils.extractCommandOptions(program)
+    (require '../src').cache action, options, (err) ->
+      message = "tinker cache #{action} #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      if err then console.log(message.red) else console.log(message.green)
+      process.exit(0)
+
 ###
 # Unknown
 ###

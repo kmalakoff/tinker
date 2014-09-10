@@ -26,7 +26,7 @@ module.exports = class Module extends (require 'backbone').Model
     console.log "Tinkering on #{@get('name')} (#{@relativePath()})"
 
     @isInstalled true, (err, is_installed) =>
-      return callback(err) if err
+      console.log 'is_installed'
       if is_installed
         if options.force
           console.log "Git: #{@get('name')} exists in #{@relativePath()}. Forcing".yellow

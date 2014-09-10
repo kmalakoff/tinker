@@ -27,9 +27,8 @@ module.exports = class Package extends (require 'backbone').Model
 
   @load: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
 
-    Vinyl.src((path.join(directory, info.file_name) for info in Package.TYPES), {read: false})
+    Vinyl.src(@optionsToDirectories(options), {read: false})
       .pipe es.writeArray (err, files) ->
         return callback(err) if err
         queue = new Queue()
@@ -37,10 +36,21 @@ module.exports = class Package extends (require 'backbone').Model
           do (file) -> queue.defer (callback) -> Package.createFromFile(file, callback)
         queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
 
+  @optionsToDirectories: (options) ->
+    directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
+
+    # filter
+    types = Package.TYPES
+    types = _.filter(Package.TYPES, (info) -> !!load_types[info.name]) if _.size(load_types = _.pick(options, _.pluck(Package.TYPES, 'name')))
+
+    (path.join(directory, info.file_name) for info in types)
+
   @createFromFile: (file, callback) ->
     file_name = path.basename(file.path)
     info = _.find(Package.TYPES, (info, name) -> info.file_name is file_name)
-    new Package({type: info.type, path: file.path}).save callback
+    new Package({type: info.type, path: file.path}).save (err, pkg) ->
+      return callback(err) if err
+      callback(null, pkg)
 
   modules: (glob, callback) ->
     fs.readdir @componentDirectory(), (err, files) =>

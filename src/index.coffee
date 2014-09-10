@@ -1,25 +1,35 @@
 _ = require 'underscore'
 Async = require 'async'
 
-Package = require './package/package'
-Module = require './package/module'
+Package = require './package'
+Module = require './module'
+GitRepo = require './git_repo'
+
+Utils = require './lib/utils'
 
 module.exports = class Tinker
   @install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    Package.load options, (err, packages) ->
+
+    Utils.load options, (err) ->
       return callback(err) if err
-      Async.each packages, ((pkg, callback) -> pkg.install callback), callback
+
+      Package.all (err, packages) ->
+        return callback(err) if err
+        Async.each packages, ((pkg, callback) -> pkg.install callback), callback
 
   @uninstall: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    Package.load options, (err, packages) ->
+    Utils.load options, (err) ->
       return callback(err) if err
-      Async.each packages, ((pkg, callback) -> pkg.uninstall callback), callback
+
+      Package.all (err, packages) ->
+        return callback(err) if err
+        Async.each packages, ((pkg, callback) -> pkg.uninstall callback), callback
 
   @on: (glob, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
-    Package.load options, (err) ->
+    Utils.load options, (err) ->
       return callback(err) if err
 
       Module.findByGlob glob, options, (err, modules) ->
@@ -29,7 +39,7 @@ module.exports = class Tinker
 
   @off: (glob, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
-    Package.load options, (err) ->
+    Utils.load options, (err) ->
       return callback(err) if err
 
       Module.findByGlob glob, options, (err, modules) ->

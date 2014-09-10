@@ -5,7 +5,7 @@ minimatch = require 'minimatch'
 rimraf = require 'rimraf'
 colors = require 'colors'
 
-GitRepo = require '../git/repo'
+GitRepo = require './git_repo'
 Package = null
 
 module.exports = class Module extends (require 'backbone').Model
@@ -35,7 +35,7 @@ module.exports = class Module extends (require 'backbone').Model
 
       rimraf @get('path'), (err) =>
         return callback(err) if err
-        new GitRepo({path: @get('path'), url: @get('git_url')}).clone callback
+        new GitRepo({git_url: @get('git_url')}).clone @get('path'), callback
 
   tinkerOff: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

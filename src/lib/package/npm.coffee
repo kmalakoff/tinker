@@ -3,8 +3,8 @@ Queue = require 'queue-async'
 rimraf = require 'rimraf'
 rpt = require 'read-package-tree'
 
-spawn = require '../../lib/spawn'
-Module = require '../module'
+spawn = require '../spawn'
+Module = require '../../module'
 
 module.exports = class Utils extends (require './base')
   @loadModules: (pkg, callback) ->

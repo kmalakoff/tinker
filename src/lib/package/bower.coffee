@@ -5,8 +5,8 @@ Queue = require 'queue-async'
 bower = require 'bower'
 rimraf = require 'rimraf'
 
-spawn = require '../../lib/spawn'
-Module = require '../module'
+spawn = require '../spawn'
+Module = require '../../module'
 
 module.exports = class Utils extends (require './base')
   @loadModules: (pkg, callback) ->

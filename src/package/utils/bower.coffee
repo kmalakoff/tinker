@@ -1,37 +1,44 @@
 fs = require 'fs'
 path = require 'path'
 _ = require 'underscore'
-es = require 'event-stream'
+Queue = require 'queue-async'
 bower = require 'bower'
-Wrench = require 'wrench'
+rimraf = require 'rimraf'
 
 spawn = require '../../lib/spawn'
 Module = require '../module'
 
 module.exports = class Utils extends (require './base')
   @loadModules: (pkg, callback) ->
-    module_directory = Utils.moduleDirectory(pkg)
+    Module.destroy {package_id: pkg.id}, (err) ->
+      return callback(err) if err
 
-    fs.readdir module_directory, (err, files) =>
-      return callback() if err # does not exist
+      module_directory = Utils.moduleDirectory(pkg)
+      fs.readdir module_directory, (err, file_names) =>
+        return callback() if err # does not exist
 
-      es.readArray(files)
-        .pipe es.map (file_name, callback) =>
-          module_path = path.join(module_directory, file_name)
-          fs.exists path.join(module_path, 'bower.json'), (exists) =>
-            return callback() unless exists
+        queue = new Queue()
+        for file_name in file_names
+          do (file_name) -> queue.defer (callback) ->
+            module_path = path.join(module_directory, file_name)
+            fs.exists path.join(module_path, 'bower.json'), (exists) =>
+              return callback() unless exists
 
-            callback = _.once(callback)
-            bower.commands.lookup(file_name)
-              .on('error', callback)
-              .on 'end', (info) =>
-                callback(null, new Module({owner: pkg, name: file_name, path: module_path, root: Utils.moduleDirectory(pkg), url: url = info?.url}))
+              callback = _.once(callback)
+              bower.commands.lookup(file_name)
+                .on('error', callback)
+                .on 'end', (info) =>
 
-        .pipe(es.writeArray(callback))
+                  # TODO: BackboneORM - why is two-step save needed
+                  new Module({name: file_name, path: module_path, root: Utils.moduleDirectory(pkg), git_url: info?.url}).save (err, module) -> module.save {package: pkg}, callback
 
-  @install: (pkg, callback) -> spawn 'bower install', Utils.cwd(pkg), callback
-  @uninstall: (pkg, callback) -> Wrench.rmdirSyncRecursive(Utils.moduleDirectory(pkg), true); callback()
+        queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
 
-  @installModule: (pkg, module, callback) -> spawn "bower install #{module.name}", Utils.cwd(pkg), callback
+  @install: (pkg, callback) ->
+    spawn 'bower install', Utils.cwd(pkg), (err) ->
+      return callback(err) if err
+      Utils.loadModules(pkg, callback)
+  @uninstall: (pkg, callback) -> rimraf Utils.moduleDirectory(pkg), callback
 
   @moduleDirectory: (pkg) -> path.join(Utils.root(pkg), 'bower_components')
+  @installModule: (pkg, module, callback) -> spawn "bower install #{module.name}", Utils.cwd(pkg), callback

@@ -5,19 +5,19 @@ Queue = require 'queue-async'
 Vinyl = require 'vinyl-fs'
 es = require 'event-stream'
 
-minimatch = require 'minimatch'
 File = require 'vinyl'
-jsonFileParse = require '../lib/json_file_parse'
 Queue = require 'queue-async'
-Module = require './module'
+Module = null
 
 bower = require 'bower'
 spawn = require '../lib/spawn'
-Wrench = require 'wrench'
+rimraf = require 'rimraf'
 Utils = require './utils'
 
 module.exports = class Package extends (require 'backbone').Model
   model_name: 'Package'
+  schema:
+    modules: -> ['hasMany', Module = require './module']
   sync: (require 'backbone-orm').sync(Package)
 
   @TYPES = [
@@ -36,12 +36,15 @@ module.exports = class Package extends (require 'backbone').Model
           do (file) -> queue.defer (callback) -> Package.createFromFile(file, callback)
         queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
 
-  @optionsToDirectories: (options) ->
-    directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
+  @optionsToTypes: (options) ->
     types = Package.TYPES
     if _.size(load_types = _.pick(options, _.pluck(Package.TYPES, 'type'))) # filter
       types = _.filter(Package.TYPES, (info) -> !!load_types[info.type])
-    (path.join(directory, info.file_name) for info in types)
+    return types
+
+  @optionsToDirectories: (options) ->
+    directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
+    (path.join(directory, info.file_name) for info in Package.optionsToTypes(options))
 
   @createFromFile: (file, callback) ->
     file_name = path.basename(file.path)

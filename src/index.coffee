@@ -1,5 +1,8 @@
+_ = require 'underscore'
 Async = require 'async'
+
 Package = require './package/package'
+Module = require './package/module'
 
 module.exports = class Tinker
   @install: (options, callback) ->
@@ -16,16 +19,20 @@ module.exports = class Tinker
 
   @on: (glob, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
-    Utils.modulesExec glob, options, ((module, callback) -> module.on options, callback), (err) ->
-      console.log err.toString().red if err
-      callback(err)
+    Package.load options, (err) ->
+      return callback(err) if err
+
+      Module.findByGlob glob, options, (err, modules) ->
+        return callback(err) if err
+        return callback(new Error "No modules found for glob #{glob}") if modules.length is 0
+        Async.each modules, ((module, callback) -> module.tinkerOn callback), callback
 
   @off: (glob, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
-    Utils.modulesExec glob, options, ((module, callback) -> module.off options, callback), (err) ->
-      console.log err.toString().red if err
-      callback(err)
+    Package.load options, (err) ->
+      return callback(err) if err
 
-      Package.all (err, packages) ->
-        console.log 'err, packages', err, packages
-        Async.each packages, fn, callback
+      Module.findByGlob glob, options, (err, modules) ->
+        return callback(err) if err
+        return callback(new Error "No modules found for glob #{glob}") if modules.length is 0
+        Async.each modules, ((module, callback) -> module.tinkerOff callback), callback

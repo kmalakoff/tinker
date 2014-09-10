@@ -1,51 +1,60 @@
 fs = require 'fs'
 path = require 'path'
 _ = require 'underscore'
-GitRepo = require '../git/repo'
-Wrench = require 'wrench'
+minimatch = require 'minimatch'
+rimraf = require 'rimraf'
 colors = require 'colors'
 
-PROPERTIES = ['name', 'root', 'path', 'url', 'owner']
+GitRepo = require '../git/repo'
+Package = null
 
 module.exports = class Module extends (require 'backbone').Model
-  constructor: (options) ->
-    @[key] = value for key, value of _.pick(options, PROPERTIES)
-    throw new Error "Module missing #{key}" for key in PROPERTIES when not @hasOwnProperty(key)
-    @repo = new GitRepo({path: @path, url: @package_url or @url})
+  model_name: 'Module'
+  schema:
+    package: -> ['belongsTo', Package = require './package']
+  sync: (require 'backbone-orm').sync(Module)
 
-  on: (options, callback) ->
+  @findByGlob: (glob, options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 2
+
+    Module.cursor({'package.type': {$in: _.pluck(Package.optionsToTypes(options), 'type')}}).toModels (err, modules) ->
+      return callback(err) if err
+      callback(null, (module for module in modules when minimatch(module.get('name'), glob)))
+
+  tinkerOn: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    console.log "Tinkering on #{@name} (#{@relativePath()})"
+    console.log "Tinkering on #{@get('name')} (#{@relativePath()})"
 
     @isInstalled true, (err, is_installed) =>
       return callback(err) if err
       if is_installed
         if options.force
-          console.log "Git: #{@name} exists in #{@relativePath()}. Forcing".yellow
+          console.log "Git: #{@get('name')} exists in #{@relativePath()}. Forcing".yellow
         else
-          (console.log "Git: #{@name} exists in #{@relativePath()}. Skipping".green; return callback())
+          (console.log "Git: #{@get('name')} exists in #{@relativePath()}. Skipping".green; return callback())
 
-      Wrench.rmdirSyncRecursive(@path, true)
-      @repo.clone callback
+      rimraf @get('path'), (err) =>
+        return callback(err) if err
+        new GitRepo({path: @get('path'), url: @get('git_url')}).clone callback
 
-  off: (options, callback) ->
+  tinkerOff: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    console.log "Tinkering off #{@name} (#{@relativePath()})"
+    console.log "Tinkering off #{@get('name')} (#{@relativePath()})"
 
     @isInstalled false, (err, is_installed) =>
       return callback(err) if err
       if is_installed
         if options.force
-          console.log "Module: #{@name} exists in #{@relativePath()}. Forcing".yellow
+          console.log "Module: #{@get('name')} exists in #{@relativePath()}. Forcing".yellow
         else
-          (console.log "Module: #{@name} exists in #{@relativePath()}. Skipping".green; return callback())
+          (console.log "Module: #{@get('name')} exists in #{@relativePath()}. Skipping".green; return callback())
 
-      Wrench.rmdirSyncRecursive(@path, true)
+      Wrench.rmdirSyncRecursive(@get('path'), true)
       @owner.installModule @, callback
 
-  relativePath: -> @path.replace("#{@root}/", '')
+  relativePath: -> @get('path').replace("#{@get('root')}/", '')
   isInstalled: (git, callback) ->
-    fs.exists path.join(@path, '.git'), (exists) =>
+    fs.exists path.join(@get('path'), '.git'), (exists) =>
       return callback(null, exists) if git
       return callback(null, false) if exists
-      fs.exists @path, (exists) => callback(null, exists)
+      fs.exists @get('path'), (exists) => callback(null, exists)

@@ -60,7 +60,10 @@ program
   .description('Enable tinker for specified modules')
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
-    (require '../src').on glob, options, -> process.exit(0)
+    (require '../src').on glob, options, (err) ->
+      message = "tinker on #{glob} #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      if err then console.log(message.red) else console.log(message.green)
+      process.exit(0)
 
 program
   .command('off <glob>')
@@ -68,7 +71,10 @@ program
   .description('Disable tinker for specified modules')
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
-    (require '../src').off glob, options, -> process.exit(0)
+    (require '../src').off glob, options, (err) ->
+      message = "tinker on #{glob} #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      if err then console.log(message.red) else console.log(message.green)
+      process.exit(0)
 
 ###
 # Unknown

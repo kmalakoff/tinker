@@ -40,7 +40,8 @@
     "underscore": "*",
     "vinyl": "*",
     "vinyl-fs": "*",
-    "wrench": "*"
+    "minimatch": "*",
+    "rimraf": "*"
   },
   "devDependencies": {
     "chai": "*",

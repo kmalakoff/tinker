@@ -27,21 +27,22 @@
   },
   "dependencies": {
     "async": "*",
-    "bower": "*",
     "backbone": "*",
     "backbone-orm": "*",
+    "bower": "*",
     "coffee-script": "*",
     "colors": "*",
     "commander": "*",
     "event-stream": "*",
+    "fs-extra": "*",
+    "minimatch": "*",
     "nodegit": "*",
+    "pwuid": "*",
     "queue-async": "*",
     "read-package-tree": "*",
     "underscore": "*",
     "vinyl": "*",
-    "vinyl-fs": "*",
-    "minimatch": "*",
-    "rimraf": "*"
+    "vinyl-fs": "*"
   },
   "devDependencies": {
     "chai": "*",

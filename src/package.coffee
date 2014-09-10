@@ -9,7 +9,7 @@ File = require 'vinyl'
 Queue = require 'queue-async'
 Module = null
 
-Utils = require './lib/package/utils'
+PackageUtils = require './lib/package_utils'
 
 module.exports = class Package extends (require 'backbone').Model
   model_name: 'Package'
@@ -52,6 +52,6 @@ module.exports = class Package extends (require 'backbone').Model
     directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
     (path.join(directory, info.file_name) for info in Package.optionsToTypes(options))
 
-  loadModules: (callback) -> Utils.call(@, 'loadModules', arguments)
-  install: (callback) -> Utils.call(@, 'install', arguments)
-  uninstall: (callback) -> Utils.call(@, 'uninstall', arguments)
+  loadModules: (callback) -> PackageUtils.call(@, 'loadModules', arguments)
+  install: (callback) -> PackageUtils.call(@, 'install', arguments)
+  uninstall: (callback) -> PackageUtils.call(@, 'uninstall', arguments)

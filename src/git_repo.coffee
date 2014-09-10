@@ -1,4 +1,7 @@
+fs = require 'fs-extra'
+path = require 'path'
 _ = require 'underscore'
+GitUtils = require './lib/git_utils'
 Git = require 'nodegit'
 
 module.exports = class GitRepo extends (require 'backbone').Model
@@ -8,7 +11,23 @@ module.exports = class GitRepo extends (require 'backbone').Model
   @load: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
-    return callback()
+    callback()
 
-  clone: (path, callback) ->
-    Git.Repo.clone @get('git_url'), path, null, (err, repo) => callback(err)
+  clone: (destination, callback) ->
+    @ensureCached (err) =>
+      return callback(err) if err
+      fs.remove destination, (err) =>
+        return callback(err) if err
+        fs.copy @cacheDirectory(), destination, callback
+
+  ensureCached: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+
+    fs.exists @cacheDirectory(), (exists) =>
+      return callback() if exists and not options.force
+
+      GitUtils.ensureCacheDirectory (err) =>
+        return callback(err) if err
+        Git.Repo.clone @get('git_url'), @cacheDirectory(), null, (err) => callback(err)
+
+  cacheDirectory: -> path.join(GitUtils.cacheDirectory(), encodeURIComponent(@get('git_url')))

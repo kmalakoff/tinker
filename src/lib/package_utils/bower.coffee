@@ -3,12 +3,12 @@ path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
 bower = require 'bower'
-rimraf = require 'rimraf'
+fs = require 'fs-extra'
 
 spawn = require '../spawn'
 Module = require '../../module'
 
-module.exports = class Utils extends (require './base')
+module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
     Module.destroy {package_id: pkg.id}, (err) ->
       return callback(err) if err
@@ -38,7 +38,7 @@ module.exports = class Utils extends (require './base')
     spawn 'bower install', Utils.cwd(pkg), (err) ->
       return callback(err) if err
       Utils.loadModules(pkg, callback)
-  @uninstall: (pkg, callback) -> rimraf Utils.moduleDirectory(pkg), callback
+  @uninstall: (pkg, callback) -> fs.remove Utils.moduleDirectory(pkg), callback
 
   @moduleDirectory: (pkg) -> path.join(Utils.root(pkg), 'bower_components')
-  @installModule: (pkg, module, callback) -> spawn "bower install #{module.name}", Utils.cwd(pkg), callback
+  @installModule: (pkg, module, callback) -> spawn "bower install #{module.get('name')}", Utils.cwd(pkg), callback

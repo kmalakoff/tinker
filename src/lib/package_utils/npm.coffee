@@ -1,12 +1,12 @@
+fs = require 'fs-extra'
 path = require 'path'
 Queue = require 'queue-async'
-rimraf = require 'rimraf'
 rpt = require 'read-package-tree'
 
 spawn = require '../spawn'
 Module = require '../../module'
 
-module.exports = class Utils extends (require './base')
+module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
     Module.destroy {package_id: pkg.id}, (err) ->
       return callback(err) if err
@@ -29,7 +29,7 @@ module.exports = class Utils extends (require './base')
         queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
 
   @install: (pkg, callback) -> spawn 'npm install', Utils.cwd(pkg), callback
-  @uninstall: (pkg, callback) -> rimraf Utils.moduleDirectory(pkg), callback
+  @uninstall: (pkg, callback) -> fs.remove Utils.moduleDirectory(pkg), callback
 
   @moduleDirectory: (pkg) -> path.join(Utils.root(pkg), 'node_modules')
-  @installModule: (pkg, module, callback) -> spawn "npm install #{module.name}", Utils.cwd(pkg), callback
+  @installModule: (pkg, module, callback) -> spawn "npm install #{module.get('name')}", Utils.cwd(pkg), callback

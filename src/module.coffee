@@ -1,11 +1,11 @@
-fs = require 'fs'
+fs = require 'fs-extra'
 path = require 'path'
 _ = require 'underscore'
 minimatch = require 'minimatch'
-rimraf = require 'rimraf'
 colors = require 'colors'
 
 GitRepo = require './git_repo'
+PackageUtils = require './lib/package_utils'
 Package = null
 
 module.exports = class Module extends (require 'backbone').Model
@@ -31,9 +31,9 @@ module.exports = class Module extends (require 'backbone').Model
         if options.force
           console.log "Git: #{@get('name')} exists in #{@relativePath()}. Forcing".yellow
         else
-          (console.log "Git: #{@get('name')} exists in #{@relativePath()}. Skipping".green; return callback())
+          console.log "Git: #{@get('name')} exists in #{@relativePath()}. Skipping".green; return callback()
 
-      rimraf @get('path'), (err) =>
+      fs.remove @get('path'), (err) =>
         return callback(err) if err
         new GitRepo({git_url: @get('git_url')}).clone @get('path'), callback
 
@@ -47,10 +47,11 @@ module.exports = class Module extends (require 'backbone').Model
         if options.force
           console.log "Module: #{@get('name')} exists in #{@relativePath()}. Forcing".yellow
         else
-          (console.log "Module: #{@get('name')} exists in #{@relativePath()}. Skipping".green; return callback())
+          console.log "Module: #{@get('name')} exists in #{@relativePath()}. Skipping".green; return callback()
 
-      Wrench.rmdirSyncRecursive(@get('path'), true)
-      @owner.installModule @, callback
+      fs.remove @get('path'), (err) =>
+        return callback(err) if err
+        @install(callback)
 
   relativePath: -> @get('path').replace("#{@get('root')}/", '')
   isInstalled: (git, callback) ->
@@ -58,3 +59,9 @@ module.exports = class Module extends (require 'backbone').Model
       return callback(null, exists) if git
       return callback(null, false) if exists
       fs.exists @get('path'), (exists) => callback(null, exists)
+
+  install: (callback) ->
+    @get 'package', (err, pkg) =>
+      return callback(err) if err
+      return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
+      PackageUtils.call(pkg, 'installModule', [@, callback])

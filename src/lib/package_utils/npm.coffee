@@ -32,4 +32,4 @@ module.exports = class Utils extends (require './index')
   @uninstall: (pkg, callback) -> fs.remove Utils.moduleDirectory(pkg), callback
 
   @moduleDirectory: (pkg) -> path.join(Utils.root(pkg), 'node_modules')
-  @installModule: (pkg, module, callback) -> spawn "npm install #{module.get('name')}", Utils.cwd(pkg), callback
+  @installModule: (pkg, module, callback) -> spawn "npm install #{module.get('name')}", Utils.cwd(module), callback

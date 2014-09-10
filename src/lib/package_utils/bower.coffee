@@ -41,4 +41,4 @@ module.exports = class Utils extends (require './index')
   @uninstall: (pkg, callback) -> fs.remove Utils.moduleDirectory(pkg), callback
 
   @moduleDirectory: (pkg) -> path.join(Utils.root(pkg), 'bower_components')
-  @installModule: (pkg, module, callback) -> spawn "bower install #{module.get('name')}", Utils.cwd(pkg), callback
+  @installModule: (pkg, module, callback) -> spawn "bower install #{module.get('name')}", Utils.cwd(module), callback

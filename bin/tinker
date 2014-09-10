@@ -39,7 +39,7 @@ program
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
     (require '../src').install options, (err) ->
-      message = "tinker install #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      message = "tinker install #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
@@ -50,7 +50,7 @@ program
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
     (require '../src').uninstall options, (err) ->
-      message = "tinker uninstall #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      message = "tinker uninstall #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
@@ -61,7 +61,7 @@ program
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
     (require '../src').on glob, options, (err) ->
-      message = "tinker on #{glob} #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      message = "tinker on #{glob} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
@@ -72,7 +72,7 @@ program
   .action (glob)->
     options = CommanderUtils.extractCommandOptions(program)
     (require '../src').off glob, options, (err) ->
-      message = "tinker on #{glob} #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      message = "tinker on #{glob} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
@@ -82,7 +82,7 @@ program
   .action (action)->
     options = CommanderUtils.extractCommandOptions(program)
     (require '../src').cache action, options, (err) ->
-      message = "tinker cache #{action} #{if err then ('failed. Error' + err.toString()) else 'succeeded'}"
+      message = "tinker cache #{action} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 

@@ -35,6 +35,7 @@
     "commander": "*",
     "event-stream": "*",
     "fs-extra": "*",
+    "github-url-from-git": "*",
     "minimatch": "*",
     "nodegit": "*",
     "pwuid": "*",

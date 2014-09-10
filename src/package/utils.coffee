@@ -4,15 +4,15 @@ Async = require 'async'
 Queue = require 'queue-async'
 Vinyl = require 'vinyl-fs'
 es = require 'event-stream'
-jsonFileParse = require './json_file_parse'
+jsonFileParse = require '../lib/json_file_parse'
 
 MODULES =
   bower:
     package_name: 'bower.json'
-    Class: require './bower_package'
+    Class: require './bower'
   npm:
     package_name: 'package.json'
-    Class: require './npm_package'
+    Class: require './npm'
 
 module.exports = class Utils
   @packages: (options, callback) ->

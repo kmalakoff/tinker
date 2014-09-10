@@ -28,6 +28,8 @@
   "dependencies": {
     "async": "*",
     "bower": "*",
+    "backbone": "*",
+    "backbone-orm": "*",
     "coffee-script": "*",
     "colors": "*",
     "commander": "*",

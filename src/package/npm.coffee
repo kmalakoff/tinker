@@ -4,18 +4,18 @@ _ = require 'underscore'
 es = require 'event-stream'
 minimatch = require 'minimatch'
 File = require 'vinyl'
-jsonFileParse = require './json_file_parse'
+jsonFileParse = require '../lib/json_file_parse'
 Queue = require 'queue-async'
 bower = require 'bower'
 Module = require './module'
 rpt = require 'read-package-tree'
 
-spawn = require './spawn'
+spawn = require '../lib/spawn'
 Wrench = require 'wrench'
 
 PROPERTIES = ['path', 'contents']
 
-module.exports = class NPMPackage
+module.exports = class NPMPackage extends (require 'backbone').Model
   constructor: (options) ->
     @[key] = value for key, value of _.pick(options, PROPERTIES)
     throw new Error "Module missing #{key}" for key in PROPERTIES when not @hasOwnProperty(key)

@@ -1,13 +1,13 @@
 fs = require 'fs'
 path = require 'path'
 _ = require 'underscore'
-GitRepo = require './git_repo'
+GitRepo = require '../git/repo'
 Wrench = require 'wrench'
 colors = require 'colors'
 
 PROPERTIES = ['name', 'root', 'path', 'url', 'package_url', 'owner']
 
-module.exports = class Module
+module.exports = class Module extends (require 'backbone').Model
   constructor: (options) ->
     @[key] = value for key, value of _.pick(options, PROPERTIES)
     throw new Error "Module missing #{key}" for key in PROPERTIES when not @hasOwnProperty(key)

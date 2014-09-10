@@ -1,5 +1,5 @@
 colors = require 'colors'
-Utils = require './lib/utils'
+Utils = require './package/utils'
 
 module.exports = class Tinker
   @install: (options, callback) ->

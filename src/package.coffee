@@ -36,7 +36,8 @@ module.exports = class Package extends (require 'backbone').Model
             do (file) -> queue.defer (callback) ->
               file_name = path.basename(file.path)
               info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
-              new Package({type: info.type, path: file.path}).save (err, pkg) ->
+
+              new Package(_.extend({type: info.type}, _.pick(file, 'cwd', 'base', 'path'))).save (err, pkg) ->
                 return callback(err) if err
                 pkg.loadModules (err) -> callback(err, pkg)
 
@@ -52,6 +53,7 @@ module.exports = class Package extends (require 'backbone').Model
     directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
     (path.join(directory, info.file_name) for info in Package.optionsToTypes(options))
 
+  packageJSON: -> @package_json or= require(@get('path')) # TODO: make async
   loadModules: (callback) -> PackageUtils.call(@, 'loadModules', arguments)
   install: (callback) -> PackageUtils.call(@, 'install', arguments)
   uninstall: (callback) -> PackageUtils.call(@, 'uninstall', arguments)

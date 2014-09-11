@@ -3,8 +3,8 @@ path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
 GitUtils = require './lib/git_utils'
-Git = require 'nodegit'
 gitURLNormalizer = require 'github-url-from-git'
+spawn = require './lib/spawn'
 
 module.exports = class GitRepo extends (require 'backbone').Model
   model_name: 'GitRepo'
@@ -16,6 +16,8 @@ module.exports = class GitRepo extends (require 'backbone').Model
     callback()
 
   clone: (destination, callback) ->
+    (console.log 'Missing git_url'; return callback()) unless @gitURL()
+
     @ensureCached (err) =>
       return callback(err) if err
 
@@ -24,6 +26,8 @@ module.exports = class GitRepo extends (require 'backbone').Model
         fs.copy @cacheDirectory(), destination, callback
 
   cloneGit: (destination, callback) ->
+    (console.log 'Missing git_url'; return callback()) unless @gitURL()
+
     fs.exists destination, (exists) =>
       # only clone the .git and .gitignore files
       if exists
@@ -40,14 +44,18 @@ module.exports = class GitRepo extends (require 'backbone').Model
 
   ensureCached: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    (console.log "Missing git_url"; return callback()) unless @gitURL()
+    (console.log 'Missing git_url'; return callback()) unless @gitURL()
 
     fs.exists @cacheDirectory(), (exists) =>
       return callback() if exists and not options.force
 
       GitUtils.cacheDirectoryEnsure (err) =>
         return callback(err) if err
-        Git.Repo.clone @gitURL(), @cacheDirectory(), null, (err) => callback(err)
+        spawn "git clone #{@gitURL()} #{@cacheDirectory()}", (err) => callback(err)
 
   cacheDirectory: -> path.join(GitUtils.cacheDirectory(), encodeURIComponent(@gitURL()))
-  gitURL: -> gitURLNormalizer(@get('git_url')); @get('git_url') # TODO: figure out how to clone over SSL
+  gitURL: ->
+    return unless url = @get('git_url')
+    url = gitURLNormalizer(url) or url
+    url = url.split('#').shift() if url.indexOf('#')
+    return url

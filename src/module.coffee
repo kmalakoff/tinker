@@ -24,7 +24,7 @@ module.exports = class Module extends (require 'backbone').Model
   tinkerOn: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     console.log "Tinkering on #{@get('name')} (#{@relativePath()})"
-    (console.log "Module: #{@get('name')} has no git_url #{@relativePath()}. Skipping".yellow; return callback()) unless @get('git_url')
+    (console.log "Module: #{@get('name')} has no git_url #{@relativePath()}. Skipping".yellow; return callback()) unless git_url = @get('git_url')
 
     @isInstalled true, (err, is_installed) =>
       if is_installed
@@ -34,13 +34,13 @@ module.exports = class Module extends (require 'backbone').Model
           console.log "Git: #{@get('name')} exists in #{@relativePath()}. Skipping".green; return callback()
 
       fs.exists @get('path'), (exists) =>
-        git_repo = new GitRepo({git_url: @get('git_url')})
+        git_repo = new GitRepo({git_url})
         git_repo[if exists then 'cloneGit' else 'clone'].call(git_repo, @get('path'), callback)
 
   tinkerOff: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     console.log "Tinkering off #{@get('name')} (#{@relativePath()})"
-    (console.log "Module: #{@get('name')} has no git_url #{@relativePath()}. Skipping".yellow; return callback()) unless @get('git_url')
+    (console.log "Module: #{@get('name')} has no git_url #{@relativePath()}. Skipping".yellow; return callback()) unless git_url = @get('git_url')
 
     @isInstalled false, (err, is_installed) =>
       return callback(err) if err

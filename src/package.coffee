@@ -29,8 +29,9 @@ module.exports = class Package extends (require 'backbone').Model
 
     Package.destroy (err) ->
       return callback(err) if err
+      return callback(null, []) unless (src = Package.optionsToDirectories(options)).length
 
-      Vinyl.src(Package.optionsToDirectories(options))
+      Vinyl.src(src)
         .pipe jsonFileParse()
         .pipe es.writeArray (err, files) ->
           return callback(err) if err

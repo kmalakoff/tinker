@@ -3,8 +3,10 @@ Queue = require 'queue-async'
 Async = require 'async'
 inquirer = require 'inquirer'
 
+Tinker = null
 Config = require '../lib/config'
 Module = require '../module'
+Utils = require '../lib/utils'
 
 TEMPLATES =
   introduction: """
@@ -16,6 +18,8 @@ TEMPLATES =
 
 class TinkerInit
   @init: (options, callback) ->
+    Tinker or= require '..'
+
     [options, callback] = [{}, options] if arguments.length is 1
     (return callback(new Error 'Tinker already initialized. Use --force to re-initialize')) if not options.force and (Config.get('package_types') or []).length
 
@@ -39,15 +43,17 @@ class TinkerInit
         validate: (answer) -> if answer.length < 1 then 'You must choose at least package type' else true
       }
     ],
-    (answers) -> Config.save answers, callback
+    (answers) ->
+      queue = new Queue(1)
+      queue.defer (callback) -> Config.save(answers, callback)
+      queue.defer (callback) -> Utils.load(options, callback) # reload
+      queue.defer (callback) -> Tinker.install(options, callback)
+      queue.await callback
 
   @configureModules: (options, callback) ->
-    (require '..').install (options = Config.optionsSetPackageTypes(options)), (err) ->
+    Module.findByGlob (options = Config.optionsSetPackageTypes(options)), (err, modules) ->
       return callback(err) if err
-
-      Module.findByGlob options, (err, modules) ->
-        return callback(err) if err
-        return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
-        Async.eachSeries modules, ((module, callback) -> module.init options, callback), callback
+      return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
+      Async.eachSeries modules, ((module, callback) -> module.init options, callback), callback
 
 module.exports = TinkerInit.init

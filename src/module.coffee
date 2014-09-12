@@ -8,6 +8,7 @@ GitRepo = require './git_repo'
 PackageUtils = require './lib/package_utils'
 Package = null
 Config = require './lib/config'
+moduleInit = require './init/module'
 
 module.exports = class Module extends (require 'backbone').Model
   model_name: 'Module'
@@ -15,8 +16,9 @@ module.exports = class Module extends (require 'backbone').Model
     package: -> ['belongsTo', Package = require './package']
   sync: (require 'backbone-orm').sync(Module)
 
-  @findByGlob: (glob, options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 2
+  @findByGlob: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    glob = options.glob or ''
 
     Module.cursor({'package.type': {$in: _.pluck(Package.optionsToTypes(options), 'type')}}).toModels (err, modules) ->
       return callback(err) if err
@@ -25,6 +27,10 @@ module.exports = class Module extends (require 'backbone').Model
         callback(null, (module for module in modules when minimatch(module.get('path'), glob)))
       else
         callback(null, (module for module in modules when minimatch(module.get('name'), glob)))
+
+  init: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    moduleInit(@, options, callback)
 
   tinkerOn: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -84,14 +90,4 @@ module.exports = class Module extends (require 'backbone').Model
       PackageUtils.apply(pkg, 'installModule', @, callback)
 
   gitURL: (options, callback) ->
-    return callback(null, url) if url = (config = _.findWhere(Config.get('modules'), {path: @get('path')}))?.url
-    @get 'package', (err, pkg) =>
-      return callback(err) if err
-      return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
-      PackageUtils.apply pkg, 'gitURL', @, (err, url) =>
-        return callback(err) if err
-        Config.get('modules').push(config = {path: @get('path')}) unless config
-        config.url = url
-        Config.save options, (err) =>
-          return callback(err) if err
-          callback(null, url)
+    return callback(null, url) if url = (config = Config.configByModule(@))?.url

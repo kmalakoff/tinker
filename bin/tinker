@@ -2,6 +2,7 @@
 
 program = require 'commander'
 colors = require 'colors'
+_ = require 'underscore'
 
 process.bin = process.title = 'tinker'
 
@@ -25,6 +26,7 @@ program.constructor::defaultOptions = ->
   @
     .option('-d, --directory <name>', 'Directory')
     .option('-f, --force', 'Force the operation')
+    .option('-g, --glob', 'Add a glob')
     .option('-b, --bower', 'Bower only')
     .option('-n, --npm', 'NPM only')
     .option('-c, --component', 'Component.io only')
@@ -33,22 +35,33 @@ program
   .version('0.0.1')
 
 program
-  .command('install')
+  .command('init [glob]')
+  .description('Initialize tinker')
+  .defaultOptions()
+  .action (glob) ->
+    options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
+    (require '../src').init options, (err) ->
+      message = "tinker init #{options.glob} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+      if err then console.log(message.red) else console.log(message.green)
+      process.exit(0)
+
+program
+  .command('install [glob]')
   .description('Install modules')
   .defaultOptions()
-  .action (glob)->
-    options = CommanderUtils.extractCommandOptions(program)
+  .action (glob) ->
+    options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
     (require '../src').install options, (err) ->
       message = "tinker install #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
 program
-  .command('uninstall')
+  .command('uninstall [glob]')
   .defaultOptions()
   .description('Install modules')
-  .action (glob)->
-    options = CommanderUtils.extractCommandOptions(program)
+  .action (glob) ->
+    options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
     (require '../src').uninstall options, (err) ->
       message = "tinker uninstall #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
@@ -58,10 +71,10 @@ program
   .command('on [glob]')
   .defaultOptions()
   .description('Enable tinker for specified modules')
-  .action (glob)->
-    options = CommanderUtils.extractCommandOptions(program)
-    (require '../src').on (glob or= '*'), options, (err) ->
-      message = "tinker on #{glob} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+  .action (glob) ->
+    options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
+    (require '../src').on options, (err) ->
+      message = "tinker on #{options.glob} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
@@ -69,10 +82,10 @@ program
   .command('off [glob]')
   .defaultOptions()
   .description('Disable tinker for specified modules')
-  .action (glob)->
-    options = CommanderUtils.extractCommandOptions(program)
-    (require '../src').off (glob or= '*'), options, (err) ->
-      message = "tinker on #{glob} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+  .action (glob) ->
+    options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
+    (require '../src').off options, (err) ->
+      message = "tinker on #{options.glob} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 

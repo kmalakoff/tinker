@@ -26,6 +26,7 @@
     "docs": "./node_modules/.bin/codo -n Tinker.js -o doc src/."
   },
   "dependencies": {
+    "ascii-art": "0.0.2-alpha",
     "async": "*",
     "backbone": "*",
     "backbone-orm": "*",
@@ -36,6 +37,7 @@
     "event-stream": "*",
     "fs-extra": "*",
     "github-url-from-git": "*",
+    "inquirer": "*",
     "minimatch": "*",
     "pwuid": "*",
     "queue-async": "*",

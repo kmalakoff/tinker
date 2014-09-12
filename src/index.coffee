@@ -4,15 +4,20 @@ Async = require 'async'
 Package = require './package'
 Module = require './module'
 GitUtils = require './lib/git_utils'
-
 Utils = require './lib/utils'
+tinkerInit = require './init/tinker'
 
 module.exports = class Tinker
   @config: require './lib/config'
 
+  @init: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    Utils.load options, (err) ->
+      return callback(err) if err
+      tinkerInit(options, callback)
+
   @install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-
     Utils.load options, (err) ->
       return callback(err) if err
 
@@ -29,24 +34,24 @@ module.exports = class Tinker
         return callback(err) if err
         Async.each packages, ((pkg, callback) -> pkg.uninstall callback), callback
 
-  @on: (glob, options, callback) ->
+  @on: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
     Utils.load options, (err) ->
       return callback(err) if err
 
-      Module.findByGlob glob, options, (err, modules) ->
+      Module.findByGlob options, (err, modules) ->
         return callback(err) if err
-        return callback(new Error "No modules found for glob #{glob}") if modules.length is 0
+        return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
         Async.eachSeries modules, ((module, callback) -> module.tinkerOn options, callback), callback
 
-  @off: (glob, options, callback) ->
+  @off: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
     Utils.load options, (err) ->
       return callback(err) if err
 
-      Module.findByGlob glob, options, (err, modules) ->
+      Module.findByGlob options, (err, modules) ->
         return callback(err) if err
-        return callback(new Error "No modules found for glob #{glob}") if modules.length is 0
+        return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
         Async.eachSeries modules, ((module, callback) -> module.tinkerOff options, callback), callback
 
   @cache: (action, options, callback) ->

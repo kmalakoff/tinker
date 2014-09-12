@@ -1,5 +1,7 @@
 _ = require 'underscore'
 
+Package = null
+
 class Config extends (require './disk_model')
   url: './.tinker'
   defaults: {package_types: [], modules: []}
@@ -12,5 +14,9 @@ class Config extends (require './disk_model')
       modules.push(config)
       modules.sort (a, b) -> a.name.localeCompare(b.name)
       return @
+
+  optionsSetPackageTypes: (options) ->
+    Package or= require '../package'; package_types = @get('package_types')
+    _.defaults(_.object(Package.TYPES, ((type in package_types) for type in Package.TYPES)), options)
 
 module.exports = new Config()

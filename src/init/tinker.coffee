@@ -17,6 +17,8 @@ TEMPLATES =
 class TinkerInit
   @init: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
+    (return callback(new Error 'Tinker already initialized. Use --force to re-initialize')) if not options.force and (Config.get('package_types') or []).length
+
     console.log _.template(TEMPLATES.introduction)()
 
     queue = new Queue(1)
@@ -26,7 +28,7 @@ class TinkerInit
 
   @configurePackageTypes: (options, callback) ->
     package_types = Config.get('package_types') or []
-    (console.log 'Package type already selected'; return callback()) if not options.force and package_types.length
+    (return callback(new Error 'Package type already selected. Use --force to re-initialize')) if not options.force and package_types.length
 
     inquirer.prompt [
       {
@@ -40,8 +42,7 @@ class TinkerInit
     (answers) -> Config.save answers, callback
 
   @configureModules: (options, callback) ->
-    types = _.object(Config.get('package_types'), (true for type in Config.get('package_types')))
-    (require '..').install (options = _.defaults(types, options)), (err) ->
+    (require '..').install (options = Config.optionsSetPackageTypes(options)), (err) ->
       return callback(err) if err
 
       Module.findByGlob options, (err, modules) ->

@@ -9,6 +9,7 @@ es = require 'event-stream'
 File = require 'vinyl'
 Queue = require 'queue-async'
 Module = null
+Config = require './lib/config'
 
 PackageUtils = require './lib/package_utils'
 
@@ -46,10 +47,11 @@ module.exports = class Package extends (require 'backbone').Model
           queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
 
   @optionsToTypes: (options) ->
-    types = Package.TYPES
-    if _.size(load_types = _.pick(options, _.pluck(Package.TYPES, 'type'))) # filter
-      types = _.filter(Package.TYPES, (info) -> !!load_types[info.type])
-    return types
+    if _.size(_.pick(options, _.pluck(Package.TYPES, 'type')))
+      return (type for type in Package.TYPES when not options.hasOwnProperty('type') or !!options[type])
+    else
+      package_types = Config.get('package_types')
+      return _.filter(Package.TYPES, (type) -> type.type in package_types)
 
   @optionsToDirectories: (options) ->
     directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()

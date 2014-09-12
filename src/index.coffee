@@ -8,6 +8,8 @@ GitUtils = require './lib/git_utils'
 Utils = require './lib/utils'
 
 module.exports = class Tinker
+  @config: require './lib/config'
+
   @install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
@@ -35,7 +37,7 @@ module.exports = class Tinker
       Module.findByGlob glob, options, (err, modules) ->
         return callback(err) if err
         return callback(new Error "No modules found for glob #{glob}") if modules.length is 0
-        Async.eachSeries modules, ((module, callback) -> module.tinkerOn callback), callback
+        Async.eachSeries modules, ((module, callback) -> module.tinkerOn options, callback), callback
 
   @off: (glob, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
@@ -45,7 +47,7 @@ module.exports = class Tinker
       Module.findByGlob glob, options, (err, modules) ->
         return callback(err) if err
         return callback(new Error "No modules found for glob #{glob}") if modules.length is 0
-        Async.eachSeries modules, ((module, callback) -> module.tinkerOff callback), callback
+        Async.eachSeries modules, ((module, callback) -> module.tinkerOff options, callback), callback
 
   @cache: (action, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2

@@ -16,7 +16,7 @@ module.exports = class GitRepo extends (require 'backbone').Model
     callback()
 
   clone: (destination, callback) ->
-    (console.log 'Missing git_url'; return callback()) unless @gitURL()
+    (console.log 'Missing url'; return callback()) unless @gitURL()
 
     @ensureCached (err) =>
       return callback(err) if err
@@ -26,7 +26,7 @@ module.exports = class GitRepo extends (require 'backbone').Model
         fs.copy @cacheDirectory(), destination, callback
 
   cloneGit: (destination, callback) ->
-    (console.log 'Missing git_url'; return callback()) unless @gitURL()
+    (console.log 'Missing url'; return callback()) unless @gitURL()
 
     fs.exists destination, (exists) =>
       # only clone the .git and .gitignore files
@@ -44,7 +44,7 @@ module.exports = class GitRepo extends (require 'backbone').Model
 
   ensureCached: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    (console.log 'Missing git_url'; return callback()) unless @gitURL()
+    (console.log 'Missing url'; return callback()) unless @gitURL()
 
     fs.exists @cacheDirectory(), (exists) =>
       return callback() if exists and not options.force
@@ -55,7 +55,7 @@ module.exports = class GitRepo extends (require 'backbone').Model
 
   cacheDirectory: -> path.join(GitUtils.cacheDirectory(), encodeURIComponent(@gitURL()))
   gitURL: ->
-    return unless url = @get('git_url')
+    return unless url = @get('url')
     url = gitURLNormalizer(url) or url
     url = url.split('#').shift() if url.indexOf('#')
     return url

@@ -1,0 +1,20 @@
+{
+  "modules": [
+    {
+      "path": "/Users/kevin/Dev/OpenSource/Mine/tinker/test/data/bower_components/backbone/bower.json",
+      "url": "git://github.com/jashkenas/backbone.git"
+    },
+    {
+      "path": "/Users/kevin/Dev/OpenSource/Mine/tinker/test/data/bower_components/backbone-orm/bower.json",
+      "url": "git://github.com/vidigami/backbone-orm"
+    },
+    {
+      "path": "/Users/kevin/Dev/OpenSource/Mine/tinker/test/data/bower_components/tinker-test/bower.json",
+      "url": "git://github.com/kmalakoff/tinker-test.git"
+    },
+    {
+      "path": "/Users/kevin/Dev/OpenSource/Mine/tinker/test/data/bower_components/underscore/bower.json",
+      "url": "git://github.com/jashkenas/underscore.git"
+    }
+  ]
+}

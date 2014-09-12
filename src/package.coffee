@@ -3,6 +3,7 @@ path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
 Vinyl = require 'vinyl-fs'
+jsonFileParse = require './lib/json_file_parse'
 es = require 'event-stream'
 
 File = require 'vinyl'
@@ -28,7 +29,8 @@ module.exports = class Package extends (require 'backbone').Model
     Package.destroy (err) ->
       return callback(err) if err
 
-      Vinyl.src(Package.optionsToDirectories(options), {read: false})
+      Vinyl.src(Package.optionsToDirectories(options))
+        .pipe jsonFileParse()
         .pipe es.writeArray (err, files) ->
           return callback(err) if err
           queue = new Queue()
@@ -37,7 +39,7 @@ module.exports = class Package extends (require 'backbone').Model
               file_name = path.basename(file.path)
               info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
 
-              new Package(_.extend({type: info.type}, _.pick(file, 'cwd', 'base', 'path'))).save (err, pkg) ->
+              new Package(_.extend({name: file.contents.name, type: info.type}, _.pick(file, 'cwd', 'path', 'contents'))).save (err, pkg) ->
                 return callback(err) if err
                 pkg.loadModules (err) -> callback(err, pkg)
 
@@ -53,7 +55,6 @@ module.exports = class Package extends (require 'backbone').Model
     directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
     (path.join(directory, info.file_name) for info in Package.optionsToTypes(options))
 
-  packageJSON: -> @package_json or= require(@get('path')) # TODO: make async
   loadModules: (callback) -> PackageUtils.call(@, 'loadModules', arguments)
   install: (callback) -> PackageUtils.call(@, 'install', arguments)
   uninstall: (callback) -> PackageUtils.call(@, 'uninstall', arguments)

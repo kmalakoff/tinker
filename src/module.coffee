@@ -7,6 +7,7 @@ colors = require 'colors'
 GitRepo = require './git_repo'
 PackageUtils = require './lib/package_utils'
 Package = null
+Config = require './lib/config'
 
 module.exports = class Module extends (require 'backbone').Model
   model_name: 'Module'
@@ -29,53 +30,52 @@ module.exports = class Module extends (require 'backbone').Model
     [options, callback] = [{}, options] if arguments.length is 1
     console.log "Tinkering on #{@get('name')} (#{@relativeDirectory()})"
 
-    @gitURL (err, git_url) =>
+    @gitURL options, (err, url) =>
       return callback(err) if err
-      (console.log "Module: #{@get('name')} has no git_url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless git_url
+      (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url
 
-      @isInstalled true, (err, is_installed) =>
+      @isInstalled true, (is_installed) =>
         if is_installed
           if options.force
             console.log "Git: #{@get('name')} exists in #{@relativeDirectory()}. Forcing".yellow
           else
             console.log "Git: #{@get('name')} exists in #{@relativeDirectory()}. Skipping".green; return callback()
 
-        fs.exists (module_directory = @moduleDirectory()), (exists) =>
-          git_repo = new GitRepo({git_url})
-          git_repo[if exists then 'cloneGit' else 'clone'].call(git_repo, module_directory, callback)
+        fs.exists @moduleDirectory(), (exists) =>
+          git_repo = new GitRepo({url})
+          git_repo[if exists then 'cloneGit' else 'clone'].call(git_repo, @moduleDirectory(), callback)
 
   tinkerOff: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     console.log "Tinkering off #{@get('name')} (#{@relativeDirectory()})"
 
-    @gitURL (err, git_url) =>
+    @gitURL options, (err, url) =>
       return callback(err) if err
-      (console.log "Module: #{@get('name')} has no git_url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless git_url
+      (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url
 
-      @isInstalled false, (err, is_installed) =>
-        return callback(err) if err
+      @isInstalled false, (is_installed) =>
         if is_installed
           if options.force
             console.log "Module: #{@get('name')} exists in #{@relativeDirectory()}. Forcing".yellow
           else
             console.log "Module: #{@get('name')} exists in #{@relativeDirectory()}. Skipping".green; return callback()
 
-        fs.exists (module_directory = @moduleDirectory()), (exists) =>
+        fs.exists @moduleDirectory(), (exists) =>
           if exists
-            fs.remove path.join(module_directory, '.git'), callback
+            fs.remove path.join(@moduleDirectory(), '.git'), callback
           else
             @install(callback)
 
-  packageJSON: -> @package_json or= require(@get('path')) # TODO: make async
-  moduleDirectory: -> path.join(@get('base'))
-  relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @get('base')).indexOf(cwd = @get('cwd')) is 0; base
+  moduleDirectory: -> path.dirname(@get('path'))
+  relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = @get('cwd')) is 0; base
 
-  isInstalled: (git, callback) ->
-    module_directory = @moduleDirectory()
-    fs.exists path.join(module_directory, '.git'), (exists) =>
-      return callback(null, exists) if git
-      return callback(null, false) if exists
-      fs.exists module_directory, (exists) => callback(null, exists)
+  isInstalled: (git_exists, callback) ->
+    fs.exists path.join(@moduleDirectory(), '.git'), (exists) =>
+      return callback(exists) if git_exists
+      return callback(false) if exists
+      fs.exists @moduleDirectory(), (exists) =>
+        console.log 'exists', exists
+        callback(exists)
 
   install: (callback) ->
     @get 'package', (err, pkg) =>
@@ -83,8 +83,15 @@ module.exports = class Module extends (require 'backbone').Model
       return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
       PackageUtils.apply(pkg, 'installModule', @, callback)
 
-  gitURL: (callback) ->
+  gitURL: (options, callback) ->
+    return callback(null, url) if url = (config = _.findWhere(Config.get('modules'), {path: @get('path')}))?.url
     @get 'package', (err, pkg) =>
       return callback(err) if err
       return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
-      PackageUtils.apply(pkg, 'gitURL', @, callback)
+      PackageUtils.apply pkg, 'gitURL', @, (err, url) =>
+        return callback(err) if err
+        Config.get('modules').push(config = {path: @get('path')}) unless config
+        config.url = url
+        Config.save options, (err) =>
+          return callback(err) if err
+          callback(null, url)

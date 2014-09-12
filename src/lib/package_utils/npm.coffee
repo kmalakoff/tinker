@@ -15,7 +15,7 @@ module.exports = class Utils extends (require './index')
       collectModules = (data, cwd) =>
         results = []
         if cwd # skip root
-          results.push new Module({name: data.package.name, cwd: cwd, base: data.path, path: path.join(data.path, 'package.json')})
+          results.push new Module({name: data.package.name, cwd: cwd, path: path.join(data.path, 'package.json'), contents: data.package})
         else
           cwd = data.path
         results = results.concat(collectModules(child, cwd)) for child in (data.children or [])
@@ -38,13 +38,9 @@ module.exports = class Utils extends (require './index')
   @modulesDirectory: (pkg) -> path.join(Utils.root(pkg), 'node_modules')
   @installModule: (pkg, module, callback) -> spawn "npm install #{module.get('name')}", Utils.cwd(module), callback
   @gitURL: (pkg, module, callback) ->
-    package_json = pkg.packageJSON()
-    module_name = module.get('name')
-
     # a git url - pass raw
-    return callback(null, location) if (location = package_json.dependencies?[module_name]) and gitURLNormalizer(location)
+    return callback(null, location) if (location = pkg.get('contents').dependencies?[module.get('name')]) and gitURLNormalizer(location)
 
-    module_package_json = module.packageJSON()
-    return callback(null, location) if (location = module_package_json._resolved) and gitURLNormalizer(location)
-    return callback(null, location) if (location = module_package_json.repository?.url) and gitURLNormalizer(location)
-    return callback(new Error "Module not found on npm: #{module_name}")
+    return callback(null, location) if (location = module.get('contents')._resolved) and gitURLNormalizer(location)
+    return callback(null, location) if (location = module.get('contents').repository?.url) and gitURLNormalizer(location)
+    return callback(new Error "Module not found on npm: #{module.get('name')}")

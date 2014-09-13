@@ -6,6 +6,7 @@ inquirer = require 'inquirer'
 Tinker = null
 Config = require '../lib/config'
 Module = require '../module'
+repositoryServicesInit = require './repository_services'
 Utils = require '../lib/utils'
 
 TEMPLATES =
@@ -27,12 +28,12 @@ class TinkerInit
 
     queue = new Queue(1)
     queue.defer (callback) -> TinkerInit.configurePackageTypes(options, callback)
+    queue.defer (callback) -> repositoryServicesInit(options, callback)
     queue.defer (callback) -> TinkerInit.configureModules(options, callback)
     queue.await callback
 
   @configurePackageTypes: (options, callback) ->
     package_types = Config.get('package_types') or []
-    (return callback(new Error 'Package type already selected. Use --force to re-initialize')) if not options.force and package_types.length
 
     inquirer.prompt [
       {

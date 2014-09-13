@@ -4,7 +4,7 @@ Package = null
 
 class Config extends (require './disk_model')
   url: './.tinker'
-  defaults: {package_types: [], modules: []}
+  defaults: {repository_services: [], package_types: [], modules: []}
 
   configByModule: (module, config) ->
     if arguments.length is 1

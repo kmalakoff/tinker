@@ -2,8 +2,8 @@ fs = require 'fs-extra'
 path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
-GitUtils = require './lib/git_utils'
-gitURLNormalizer = require 'github-url-from-git'
+RepoUtils = require './lib/repo_utils'
+repoURLNormalizer = require 'github-url-from-git'
 spawn = require './lib/spawn'
 
 module.exports = class GitRepo extends (require 'backbone').Model
@@ -16,7 +16,7 @@ module.exports = class GitRepo extends (require 'backbone').Model
     callback()
 
   clone: (destination, callback) ->
-    (console.log 'Missing url'; return callback()) unless @gitURL()
+    (console.log 'Missing url'; return callback()) unless @repoURL()
 
     @ensureCached (err) =>
       return callback(err) if err
@@ -26,7 +26,7 @@ module.exports = class GitRepo extends (require 'backbone').Model
         fs.copy @cacheDirectory(), destination, callback
 
   cloneGit: (destination, callback) ->
-    (console.log 'Missing url'; return callback()) unless @gitURL()
+    (console.log 'Missing url'; return callback()) unless @repoURL()
 
     fs.exists destination, (exists) =>
       # only clone the .git and .gitignore files
@@ -44,18 +44,18 @@ module.exports = class GitRepo extends (require 'backbone').Model
 
   ensureCached: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    (console.log 'Missing url'; return callback()) unless @gitURL()
+    (console.log 'Missing url'; return callback()) unless @repoURL()
 
     fs.exists @cacheDirectory(), (exists) =>
       return callback() if exists and not options.force
 
-      GitUtils.cacheDirectoryEnsure (err) =>
+      RepoUtils.cacheDirectoryEnsure (err) =>
         return callback(err) if err
-        spawn "git clone #{@gitURL()} #{@cacheDirectory()}", (err) => callback(err)
+        spawn "git clone #{@repoURL()} #{@cacheDirectory()}", (err) => callback(err)
 
-  cacheDirectory: -> path.join(GitUtils.cacheDirectory(), encodeURIComponent(@gitURL()))
-  gitURL: ->
+  cacheDirectory: -> path.join(RepoUtils.cacheDirectory(), encodeURIComponent(@repoURL()))
+  repoURL: ->
     return unless url = @get('url')
-    url = gitURLNormalizer(url) or url
+    url = repoURLNormalizer(url) or url
     url = url.split('#').shift() if url.indexOf('#')
     return url

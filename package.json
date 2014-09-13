@@ -26,7 +26,6 @@
     "docs": "./node_modules/.bin/codo -n Tinker.js -o doc src/."
   },
   "dependencies": {
-    "ascii-art": "0.0.2-alpha",
     "async": "*",
     "backbone": "*",
     "backbone-orm": "*",
@@ -42,7 +41,9 @@
     "pwuid": "*",
     "queue-async": "*",
     "read-package-tree": "*",
+    "superagent": "*",
     "underscore": "*",
+    "validator": "*",
     "vinyl": "*",
     "vinyl-fs": "*"
   },

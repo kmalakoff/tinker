@@ -1,7 +1,7 @@
 Queue = require 'queue-async'
 
 Package = require '../package'
-GitRepo = require '../git_repo'
+GitRepo = require '../repo'
 Config = require './config'
 
 module.exports = class Utils

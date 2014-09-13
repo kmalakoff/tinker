@@ -5,11 +5,11 @@ es = require 'event-stream'
 Queue = require 'queue-async'
 bower = require 'bower'
 Vinyl = require 'vinyl-fs'
-gitURLNormalizer = require 'github-url-from-git'
-jsonFileParse = require '../json_file_parse'
 
 spawn = require '../spawn'
 Module = require '../../module'
+jsonFileParse = require '../json_file_parse'
+RepoUtils = require '../repo_utils'
 
 module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
@@ -31,13 +31,14 @@ module.exports = class Utils extends (require './index')
 
   @modulesDirectory: (pkg) -> path.join(Utils.root(pkg), 'bower_components')
   @installModule: (pkg, module, callback) -> spawn "bower install #{module.get('name')}", Utils.cwd(module), callback
-  @gitURL: (pkg, module, callback) ->
-    # a git url - pass raw
-    return callback(null, location) if (location = pkg.get('contents').dependencies?[module.get('name')]) and gitURLNormalizer(location)
+  @repositories: (pkg, module, callback) ->
+    repositories = []
+    repositories.push(url) if RepoUtils.isURL(url = pkg.get('contents').dependencies?[module.get('name')])
 
-    callback = _.once(callback)
-    bower.commands.lookup(module.get('name'))
-      .on('error', callback)
-      .on 'end', (info) =>
-        return callback(new Error "Module not found on bower: #{module.get('name')}") unless git_url = info?.url
-        callback(null, git_url)
+    queue = new Queue()
+    queue.defer (callback) ->
+      callback = _.once(callback)
+      bower.commands.lookup(module.get('name'))
+        .on('error', callback)
+        .on 'end', (info) => repositories.push(url) if RepoUtils.isURL(url = info?.url); callback()
+    queue.await (err) -> callback(err, repositories)

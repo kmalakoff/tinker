@@ -3,7 +3,7 @@ Async = require 'async'
 
 Package = require './package'
 Module = require './module'
-GitUtils = require './lib/git_utils'
+RepoUtils = require './lib/repo_utils'
 Utils = require './lib/utils'
 tinkerInit = require './init/tinker'
 
@@ -58,5 +58,5 @@ module.exports = class Tinker
     [options, callback] = [{}, options] if arguments.length is 2
 
     switch action
-      when 'clear', 'clean' then return GitUtils.cacheClear(options, callback)
+      when 'clear', 'clean' then return RepoUtils.cacheClear(options, callback)
       else return callback(new Error "Unrecognized cache action '#{action}'")

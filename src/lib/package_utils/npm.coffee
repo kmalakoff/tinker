@@ -2,10 +2,10 @@ fs = require 'fs-extra'
 path = require 'path'
 Queue = require 'queue-async'
 rpt = require 'read-package-tree'
-gitURLNormalizer = require 'github-url-from-git'
 
 spawn = require '../spawn'
 Module = require '../../module'
+RepoUtils = require '../repo_utils'
 
 module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
@@ -37,10 +37,9 @@ module.exports = class Utils extends (require './index')
 
   @modulesDirectory: (pkg) -> path.join(Utils.root(pkg), 'node_modules')
   @installModule: (pkg, module, callback) -> spawn "npm install #{module.get('name')}", Utils.cwd(module), callback
-  @gitURL: (pkg, module, callback) ->
-    # a git url - pass raw
-    return callback(null, location) if (location = pkg.get('contents').dependencies?[module.get('name')]) and gitURLNormalizer(location)
-
-    return callback(null, location) if (location = module.get('contents')._resolved) and gitURLNormalizer(location)
-    return callback(null, location) if (location = module.get('contents').repository?.url) and gitURLNormalizer(location)
-    return callback(new Error "Module not found on npm: #{module.get('name')}")
+  @repositories: (pkg, module, callback) ->
+    repositories = []
+    repositories.push('git') if RepoUtils.isURL(url = pkg.get('contents').dependencies?[module.get('name')])
+    repositories.push(url) if RepoUtils.isURL(url = module.get('contents').repository?.url)
+    repositories.push(url) if RepoUtils.isURL(url = module.get('contents')._resolved)
+    callback(null, repositories)

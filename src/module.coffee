@@ -1,11 +1,14 @@
 fs = require 'fs-extra'
 path = require 'path'
 _ = require 'underscore'
+request = require 'superagent'
+Queue = require 'queue-async'
 minimatch = require 'minimatch'
 colors = require 'colors'
 
-GitRepo = require './git_repo'
+GitRepo = require './repo'
 PackageUtils = require './lib/package_utils'
+RepoUtils = require './lib/repo_utils'
 Package = null
 Config = require './lib/config'
 moduleInit = require './init/module'
@@ -36,7 +39,7 @@ module.exports = class Module extends (require 'backbone').Model
     [options, callback] = [{}, options] if arguments.length is 1
     console.log "Tinkering on #{@get('name')} (#{@relativeDirectory()})"
 
-    @gitURL options, (err, url) =>
+    @repositoryURL options, (err, url) =>
       return callback(err) if err
       (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url
 
@@ -48,14 +51,14 @@ module.exports = class Module extends (require 'backbone').Model
             console.log "Git: #{@get('name')} exists in #{@relativeDirectory()}. Skipping".green; return callback()
 
         fs.exists @moduleDirectory(), (exists) =>
-          git_repo = new GitRepo({url})
-          git_repo[if exists then 'cloneGit' else 'clone'].call(git_repo, @moduleDirectory(), callback)
+          repo = new GitRepo({url})
+          repo[if exists then 'cloneGit' else 'clone'].call(repo, @moduleDirectory(), callback)
 
   tinkerOff: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     console.log "Tinkering off #{@get('name')} (#{@relativeDirectory()})"
 
-    @gitURL options, (err, url) =>
+    @repositoryURL options, (err, url) =>
       return callback(err) if err
       (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url
 
@@ -89,5 +92,28 @@ module.exports = class Module extends (require 'backbone').Model
       return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
       PackageUtils.apply(pkg, 'installModule', @, callback)
 
-  gitURL: (options, callback) ->
+  repositoryURL: (options, callback) ->
     return callback(null, url) if url = (config = Config.configByModule(@))?.url
+
+  repositories: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+
+    repositories = []
+
+    queue = new Queue()
+    queue.defer (callback) =>
+      @get 'package', (err, pkg) =>
+        return callback(err) if err
+        return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
+        PackageUtils.apply pkg, 'repositories', @, (err, _repositories) =>
+          return callback(err) if err
+          repositories = repositories.concat(_repositories)
+          callback()
+
+    for repository_service in (Config.get('repository_services') or [])
+      do (repository_service) => queue.defer (callback) =>
+        request.head(url = "#{repository_service}/#{@get('name')}").end (res) =>
+          repositories.push(url) if res.status is 200
+          callback()
+
+    queue.await (err) => callback(err, _.uniq(RepoUtils.normalizeURL(repository) for repository in repositories))

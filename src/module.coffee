@@ -10,7 +10,7 @@ GitRepo = require './repo'
 PackageUtils = require './lib/package_utils'
 RepoURL = require './lib/repo_url'
 Package = null
-Config = require './lib/config'
+Config = require './config'
 moduleInit = require './init/module'
 spawn = require './lib/spawn'
 
@@ -85,11 +85,18 @@ module.exports = class Module extends (require 'backbone').Model
       return callback(false) if exists
       fs.exists @moduleDirectory(), callback
 
-  install: (callback) ->
-    @get 'package', (err, pkg) =>
-      return callback(err) if err
-      return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
-      PackageUtils.apply(pkg, 'installModule', @, callback)
+  install: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+
+    fs.exists @moduleDirectory(), (exists) =>
+      return callback() if exists and not options.force
+      fs.remove @moduleDirectory(), (err) =>
+        return callback(err) if err
+
+        @get 'package', (err, pkg) =>
+          return callback(err) if err
+          return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
+          PackageUtils.apply(pkg, 'installModule', @, callback)
 
   repositories: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

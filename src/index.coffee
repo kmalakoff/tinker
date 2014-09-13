@@ -5,7 +5,7 @@ Package = require './package'
 Module = require './module'
 RepoUtils = require './lib/repo_utils'
 Utils = require './lib/utils'
-Config = require './lib/config'
+Config = require './config'
 tinkerInit = require './init/tinker'
 
 module.exports = class Tinker
@@ -31,7 +31,7 @@ module.exports = class Tinker
 
       Package.all (err, packages) ->
         return callback(err) if err
-        Async.each packages, ((pkg, callback) -> pkg.install callback), callback
+        Async.each packages, ((pkg, callback) -> pkg.install(options, callback)), callback
 
   @uninstall: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -40,7 +40,7 @@ module.exports = class Tinker
 
       Package.all (err, packages) ->
         return callback(err) if err
-        Async.each packages, ((pkg, callback) -> pkg.uninstall callback), callback
+        Async.each packages, ((pkg, callback) -> pkg.uninstall(options, callback)), callback
 
   @on: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

@@ -2,7 +2,7 @@ Queue = require 'queue-async'
 
 Package = require '../package'
 GitRepo = require '../repo'
-Config = require './config'
+Config = require '../config'
 
 module.exports = class Utils
   @load: (options, callback) ->

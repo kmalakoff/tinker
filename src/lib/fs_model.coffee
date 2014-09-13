@@ -2,7 +2,7 @@ fs = require 'fs'
 path = require 'path'
 _ = require 'underscore'
 
-module.exports = class DiskModel extends (require 'backbone').Model
+module.exports = class FSModel extends (require 'backbone').Model
   load: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     @clear().set(_.result(@, 'defaults'))
@@ -11,7 +11,7 @@ module.exports = class DiskModel extends (require 'backbone').Model
       try callback(null, @set(JSON.parse(contents))) catch err then callback(new Error "#{@file_path}: #{err.toString()}")
 
   save: (attributes, callback) ->
-    return callback(new Error 'DiskModel: not file_path for save. Load using load function or set file_path') unless @file_path
+    return callback(new Error 'FSModel: not file_path for save. Load using load function or set file_path') unless @file_path
 
     [attributes, callback] = [{}, attributes] if arguments.length is 1
     @set(attributes)

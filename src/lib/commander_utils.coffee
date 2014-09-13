@@ -1,5 +1,3 @@
-_ = require 'underscore'
-
 module.exports = class CommanderUtils
   @getOptionsOwner: (program, command_name) ->
     return command for command in program.commands when command._name is command_name

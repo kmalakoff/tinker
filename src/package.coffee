@@ -9,7 +9,7 @@ es = require 'event-stream'
 {File} = require 'gulp-util'
 Queue = require 'queue-async'
 Module = null
-Config = require './lib/config'
+Config = require './config'
 
 PackageUtils = require './lib/package_utils'
 
@@ -59,5 +59,13 @@ module.exports = class Package extends (require 'backbone').Model
     (path.join(directory, info.file_name) for info in Package.optionsToTypes(options))
 
   loadModules: (callback) -> PackageUtils.call(@, 'loadModules', arguments)
-  install: (callback) -> PackageUtils.call(@, 'install', arguments)
-  uninstall: (callback) -> PackageUtils.call(@, 'uninstall', arguments)
+  install: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    queue = new Queue(1)
+    queue.defer((callback) => @uninstall(options, callback)) if options.force
+    queue.defer (callback) => PackageUtils.call(@, 'install', [callback])
+    queue.await callback
+
+  uninstall: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    PackageUtils.call(@, 'uninstall', [callback])

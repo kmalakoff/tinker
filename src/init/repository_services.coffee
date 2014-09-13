@@ -2,7 +2,7 @@ _ = require 'underscore'
 inquirer = require 'inquirer'
 validator = require 'validator'
 
-Config = require '../lib/config'
+Config = require '../config'
 PackageUtils = require '../lib/package_utils'
 RepoUtils = require '../lib/repo_utils'
 

@@ -4,9 +4,8 @@ Async = require 'async'
 inquirer = require 'inquirer'
 
 Tinker = null
-Config = require '../lib/config'
+Config = require '../config'
 Module = require '../module'
-repositoryServicesInit = require './repository_services'
 Utils = require '../lib/utils'
 
 TEMPLATES =
@@ -26,7 +25,8 @@ class TinkerInit
 
     queue = new Queue(1)
     queue.defer (callback) -> TinkerInit.configurePackageTypes(options, callback)
-    queue.defer (callback) -> repositoryServicesInit(options, callback)
+    queue.defer (callback) -> (require './repository_services')(options, callback)
+    queue.defer (callback) -> (require './git')(options, callback)
     queue.defer (callback) -> TinkerInit.configureModules(options, callback)
     queue.await callback
 

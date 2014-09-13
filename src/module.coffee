@@ -7,8 +7,8 @@ minimatch = require 'minimatch'
 inquirer = require 'inquirer'
 require 'colors'
 
-GitRepo = require './repo'
 PackageUtils = require './lib/package_utils'
+RepoUtils = require './lib/repo_utils'
 RepoURL = require './lib/repo_url'
 Package = null
 Config = require './config'

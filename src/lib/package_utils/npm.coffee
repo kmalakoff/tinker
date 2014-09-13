@@ -36,7 +36,12 @@ module.exports = class Utils extends (require './index')
   @uninstall: (pkg, callback) -> fs.remove Utils.modulesDirectory(pkg), callback
 
   @modulesDirectory: (pkg) -> path.join(Utils.root(pkg), 'node_modules')
-  @installModule: (pkg, module, callback) -> spawn "npm install #{module.get('name')}", Utils.cwd(module), callback
+  @installModule: (pkg, module, callback) ->
+    cwd = path.dirname(Utils.root(module))
+    fs.ensure cwd, (err) ->
+      return callback(err) if err
+      spawn "npm install #{module.get('name')}", {cwd: cwd}, callback
+
   @repositories: (pkg, module, callback) ->
     repositories = []
     repositories.push(url) if RepoURL.isValid(url = pkg.get('contents').dependencies?[module.get('name')])

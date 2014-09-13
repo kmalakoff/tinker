@@ -15,11 +15,14 @@ module.exports = class Tinker
       return callback(err) if err
       tinkerInit(options, callback)
 
-  @configure: (args, options, callback) ->
+  @config: (args, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
     Config.load options, (err) ->
       return callback(err) if err
-      Config.save Config.parseArgs(args), callback
+      if args.length
+        Config.save Config.parseArgs(args), callback
+      else
+        console.log Config.toJSON()
 
   @install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

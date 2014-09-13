@@ -35,7 +35,6 @@
     "commander": "*",
     "event-stream": "*",
     "fs-extra": "*",
-    "github-url-from-git": "*",
     "inquirer": "*",
     "minimatch": "*",
     "pwuid": "*",
@@ -44,7 +43,6 @@
     "superagent": "*",
     "underscore": "*",
     "validator": "*",
-    "vinyl": "*",
     "vinyl-fs": "*"
   },
   "devDependencies": {

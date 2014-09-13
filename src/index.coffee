@@ -35,7 +35,7 @@ module.exports = class Tinker
         Async.each packages, ((pkg, callback) -> pkg.uninstall callback), callback
 
   @on: (options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 2
+    [options, callback] = [{}, options] if arguments.length is 1
     Utils.load options, (err) ->
       return callback(err) if err
 
@@ -45,7 +45,7 @@ module.exports = class Tinker
         Async.eachSeries modules, ((module, callback) -> module.tinkerOn options, callback), callback
 
   @off: (options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 2
+    [options, callback] = [{}, options] if arguments.length is 1
     Utils.load options, (err) ->
       return callback(err) if err
 

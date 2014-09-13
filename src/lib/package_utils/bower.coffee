@@ -16,7 +16,7 @@ module.exports = class Utils extends (require './index')
     Module.destroy {package_id: pkg.id}, (err) ->
       return callback(err) if err
 
-      Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', 'bower.json'))
+      Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', '.bower.json'))
         .pipe jsonFileParse()
         .pipe es.map (file, callback) ->
           # TODO: BackboneORM - why is two-step save needed
@@ -34,6 +34,14 @@ module.exports = class Utils extends (require './index')
   @repositories: (pkg, module, callback) ->
     repositories = []
     repositories.push(url) if RepoUtils.isURL(url = pkg.get('contents').dependencies?[module.get('name')])
+
+    if RepoUtils.isURL(url = module.get('contents')._source)
+      if resolution = module.get('contents')._resolution
+        switch resolution.type
+          when 'version' then repositories.push("#{url}##{resolution.tag}")
+          when 'branch' then repositories.push("#{url}##{resolution.tag}")
+        repositories.push("#{url}##{resolution.commit}")
+      repositories.push(url)
 
     queue = new Queue()
     queue.defer (callback) ->

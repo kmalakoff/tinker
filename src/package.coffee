@@ -6,7 +6,7 @@ Vinyl = require 'vinyl-fs'
 jsonFileParse = require './lib/json_file_parse'
 es = require 'event-stream'
 
-File = require 'vinyl'
+{File} = require 'gulp-util'
 Queue = require 'queue-async'
 Module = null
 Config = require './lib/config'

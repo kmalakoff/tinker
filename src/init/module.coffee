@@ -8,6 +8,7 @@ RepoUtils = require '../lib/repo_utils'
 TEMPLATES =
   introduction: """
 
+    ****************
     """
 
 class ModuleInit

@@ -39,7 +39,7 @@ module.exports = class Utils extends (require './index')
   @installModule: (pkg, module, callback) -> spawn "npm install #{module.get('name')}", Utils.cwd(module), callback
   @repositories: (pkg, module, callback) ->
     repositories = []
-    repositories.push('git') if RepoUtils.isURL(url = pkg.get('contents').dependencies?[module.get('name')])
+    repositories.push(url) if RepoUtils.isURL(url = pkg.get('contents').dependencies?[module.get('name')])
     repositories.push(url) if RepoUtils.isURL(url = module.get('contents').repository?.url)
     repositories.push(url) if RepoUtils.isURL(url = module.get('contents')._resolved)
     callback(null, repositories)

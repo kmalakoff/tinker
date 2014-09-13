@@ -3,7 +3,6 @@ path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
 RepoUtils = require './lib/repo_utils'
-repoURLNormalizer = require 'github-url-from-git'
 spawn = require './lib/spawn'
 
 module.exports = class GitRepo extends (require 'backbone').Model
@@ -56,6 +55,6 @@ module.exports = class GitRepo extends (require 'backbone').Model
   cacheDirectory: -> path.join(RepoUtils.cacheDirectory(), encodeURIComponent(@repoURL()))
   repoURL: ->
     return unless url = @get('url')
-    url = repoURLNormalizer(url) or url
+    url = RepoUtils.normalizeURL(url) or url
     url = url.split('#').shift() if url.indexOf('#')
     return url

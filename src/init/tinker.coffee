@@ -20,15 +20,13 @@ TEMPLATES =
 class TinkerInit
   @init: (options, callback) ->
     Tinker or= require '..'
-
     [options, callback] = [{}, options] if arguments.length is 1
-    (return callback(new Error 'Tinker already initialized. Use --force to re-initialize')) if not options.force and (Config.get('package_types') or []).length
 
     console.log _.template(TEMPLATES.introduction)()
 
     queue = new Queue(1)
-    queue.defer (callback) -> TinkerInit.configurePackageTypes(options, callback)
-    queue.defer (callback) -> repositoryServicesInit(options, callback)
+    # queue.defer (callback) -> TinkerInit.configurePackageTypes(options, callback)
+    # queue.defer (callback) -> repositoryServicesInit(options, callback)
     queue.defer (callback) -> TinkerInit.configureModules(options, callback)
     queue.await callback
 

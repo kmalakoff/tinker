@@ -9,6 +9,7 @@ RepoUtils = require '../lib/repo_utils'
 TEMPLATES =
   introduction: """
 
+    ****************
     """
 
 class RepositoryServicesInit
@@ -17,14 +18,14 @@ class RepositoryServicesInit
 
     console.log _.template(TEMPLATES.introduction)(module)
     console.log "Known repository services: #{repository_services.join(', ')}" if (repository_services = Config.get('repository_services') or []).length
-    RepositoryServicesInit.enterRepositoryService(options, callback)
+    RepositoryServicesInit.enterRepositoryService(options, repository_services, callback)
 
-  @enterRepositoryService: (options, callback) ->
+  @enterRepositoryService: (options, initial_repository_services, callback) ->
     inquirer.prompt [
      {
         type: 'input',
         name: 'url',
-        message: 'Enter a repository service url for fork discovery (leave empty to skip)',
+        message: 'Enter a repository service url for fork discovery (empty for next)',
         validate: (value) ->
           return true if !value or (value.toLowerCase() is 'skip') or validator.isURL(value)
           'Please enter a valid repository service url'
@@ -32,12 +33,13 @@ class RepositoryServicesInit
     ], (answers) ->
       switch (url = answers.url).toLowerCase()
         when ''
-          console.log "Known repository services: #{repository_services.join(', ')}" if (repository_services = Config.get('repository_services') or []).length
+          if (repository_services = Config.get('repository_services') or []).length
+            console.log "Known repository services: #{repository_services.join(', ')}" if _.difference(initial_repository_services, repository_services).length
           return callback()
         else
           console.log "Added #{url}"
           Config.save {repository_services: _.uniq((Config.get('repository_services') or []).concat([url]))}, (err) ->
             return callback(err) if err
-            RepositoryServicesInit.enterRepositoryService(options, callback)
+            RepositoryServicesInit.enterRepositoryService(options, initial_repository_services, callback)
 
 module.exports = RepositoryServicesInit.init

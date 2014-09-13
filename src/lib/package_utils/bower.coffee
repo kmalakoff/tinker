@@ -39,7 +39,7 @@ module.exports = class Utils extends (require './index')
       if resolution = module.get('contents')._resolution
         switch resolution.type
           when 'version' then repositories.push("#{url}##{resolution.tag}")
-          when 'branch' then repositories.push("#{url}##{resolution.tag}")
+          when 'branch' then repositories.push("#{url}##{resolution.branch}")
         repositories.push("#{url}##{resolution.commit}")
       repositories.push(url)
 

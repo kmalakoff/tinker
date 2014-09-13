@@ -30,6 +30,7 @@
     "backbone": "*",
     "backbone-orm": "*",
     "bower": "*",
+    "bower-endpoint-parser": "^0.2.2",
     "coffee-script": "*",
     "colors": "*",
     "commander": "*",

@@ -116,6 +116,4 @@ module.exports = class Module extends (require 'backbone').Model
           repositories.push(url) if res.status is 200
           callback()
 
-    queue.await (err) =>
-      console.log 'repositories', repositories
-      callback(err, _.uniq(RepoUtils.normalizeURL(repository) for repository in repositories))
+    queue.await (err) => callback(err, _.uniq(RepoUtils.normalizeURL(repository) for repository in repositories).sort())

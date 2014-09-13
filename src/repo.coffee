@@ -13,11 +13,6 @@ module.exports = class GitRepo extends (require 'backbone').Model
   model_name: 'GitRepo'
   sync: (require 'backbone-orm').sync(GitRepo)
 
-  @load: (options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 1
-
-    callback()
-
   clone: (destination, callback) ->
     return callback(new Error "Invalid url: #{@get('url')}") unless url = RepoURL.parse(@get('url'))?.source
 

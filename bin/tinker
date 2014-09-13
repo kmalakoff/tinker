@@ -3,24 +3,9 @@
 program = require 'commander'
 colors = require 'colors'
 _ = require 'underscore'
+CommanderUtils = require '../src/lib/commander_utils'
 
 process.bin = process.title = 'tinker'
-
-class CommanderUtils
-  @getOptionsOwner: (program, command_name) ->
-    return command for command in program.commands when command._name is command_name
-    return null
-
-  @extractCommandOptions: (program) -> CommanderUtils.extractOptions(program, program.args[program.args.length-1]._name)
-  @extractOptions: (program, command_name) ->
-    program = CommanderUtils.getOptionsOwner(program, command_name) if command_name
-    (console.log "Couldn't find options for #{command_name}"; return {}) unless program
-
-    options = if program.parent then CommanderUtils.extractOptions(program.parent) else {}
-    for option_info in program.options
-      key = option_info.long.replace('--', '')
-      (options[key] = program[key] if program.hasOwnProperty(key))
-    return options
 
 program.constructor::defaultOptions = ->
   @
@@ -29,7 +14,7 @@ program.constructor::defaultOptions = ->
     .option('-g, --glob', 'Add a glob')
     .option('-b, --bower', 'Bower only')
     .option('-n, --npm', 'NPM only')
-    .option('-c, --component', 'Component.io only')
+    # .option('-c, --component', 'Component.io only')
 
 program
   .version('0.0.1')
@@ -112,18 +97,6 @@ program
       process.exit(0)
 
 program
-  .command('git *')
-  .defaultOptions()
-  .description('Run a git command on a module')
-  .action (glob) ->
-    args = Array::splice.call(arguments, 1); args.pop()
-    options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
-    (require '../src').git args, options, (err) ->
-      message = "tinker git #{options.glob} #{args.join(' ')} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
-      if err then console.log(message.red) else console.log(message.green)
-      process.exit(0)
-
-program
   .command('exec *')
   .defaultOptions()
   .description('Run a command command on a module')
@@ -131,17 +104,14 @@ program
     args = Array::splice.call(arguments, 1); args.pop()
     options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
     (require '../src').exec args, options, (err) ->
-      message = "tinker git #{options.glob} #{args.join(' ')} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+      message = "tinker #{options.glob} #{args.join(' ')} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
-###
-# Unknown
-###
 program
   .command('*')
-  .description('catch all for unrecognized commands')
-  .action ->
-    console.log "Unrecognized command: #{process.argv[2]}"
+  .defaultOptions()
+  .description('Run a command command on a module')
+  .action -> process.argv.splice(2, 0, 'exec'); program.parse(process.argv) # default to exec
 
 program.parse(process.argv)

@@ -9,5 +9,4 @@ module.exports = class Utils
     queue = new Queue(1)
     queue.defer (callback) -> Config.load options, callback
     queue.defer (callback) -> Package.load options, callback
-    queue.defer (callback) -> GitRepo.load options, callback
     queue.await callback

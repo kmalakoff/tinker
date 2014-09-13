@@ -50,7 +50,7 @@ program
   .description('Configure tinker')
   .defaultOptions()
   .action ->
-    args = Array::splice.call(arguments, 0, arguments.length-1)
+    args = Array::splice.call(arguments, 0); args.pop()
     options = CommanderUtils.extractCommandOptions(program)
     (require '../src').config args, options, (err) ->
       message = "tinker config #{args.join(' ')} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
@@ -108,6 +108,18 @@ program
     options = CommanderUtils.extractCommandOptions(program)
     (require '../src').cache action, options, (err) ->
       message = "tinker cache #{action} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+      if err then console.log(message.red) else console.log(message.green)
+      process.exit(0)
+
+program
+  .command('git *')
+  .defaultOptions()
+  .description('Run a git command on a module')
+  .action (glob) ->
+    args = Array::splice.call(arguments, 1); args.pop()
+    options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
+    (require '../src').git args, options, (err) ->
+      message = "tinker git #{options.glob} #{args} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 

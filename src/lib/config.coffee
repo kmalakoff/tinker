@@ -19,4 +19,16 @@ class Config extends (require './disk_model')
     Package or= require '../package'; package_types = @get('package_types')
     _.defaults(_.object(Package.TYPES, ((type in package_types) for type in Package.TYPES)), options)
 
+  parseArgs: (array) ->
+    defaults = _.result(@, 'defaults') or {}
+
+    config = {}
+    for arg in array
+      [key, value] = arg.split('=')
+      try value = JSON.parse(value)
+      if defaults.hasOwnProperty(key) and _.isArray(defaults[key]) and not _.isArray(value)
+        value = if _.isString(value) and ~value.indexOf(',') then value.split(',') else [value]
+      config[key] = value
+    return config
+
 module.exports = new Config()

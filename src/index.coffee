@@ -5,16 +5,21 @@ Package = require './package'
 Module = require './module'
 RepoUtils = require './lib/repo_utils'
 Utils = require './lib/utils'
+Config = require './lib/config'
 tinkerInit = require './init/tinker'
 
 module.exports = class Tinker
-  @config: require './lib/config'
-
   @init: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     Utils.load options, (err) ->
       return callback(err) if err
       tinkerInit(options, callback)
+
+  @configure: (args, options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 2
+    Config.load options, (err) ->
+      return callback(err) if err
+      Config.save Config.parseArgs(args), callback
 
   @install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

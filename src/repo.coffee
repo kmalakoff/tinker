@@ -59,22 +59,21 @@ module.exports = class GitRepo extends (require 'backbone').Model
     [options, callback] = [{}, options] if arguments.length is 1
     return callback(new Error "Invalid url: #{@get('url')}") unless url = RepoURL.parse(@get('url'))?.source
 
-    fs.exists @cacheDirectory(), (exists) =>
-      return callback() if exists and not options.force
-
-      lockedExec @lockFile(), callback, (callback) =>
-        queue = new Queue(1)
-        queue.defer (callback) => RepoUtils.cacheDirectoryEnsure(callback)
-        queue.defer (callback) => fs.exists @cacheDirectory(), (exists) =>
-          return callback() if exists
+    lockedExec @lockFile(), callback, (callback) =>
+      queue = new Queue(1)
+      queue.defer (callback) => RepoUtils.cacheDirectoryEnsure(callback)
+      queue.defer (callback) => fs.exists @cacheDirectory(), (exists) =>
+        if exists
+          spawn 'git fetch --all', {cwd: @cacheDirectory(), silent: true}, callback
+        else
           spawn "git clone #{url} #{@cacheDirectory()}", callback
-        queue.await (err) =>
-          return callback() unless err
+      queue.await (err) =>
+        return callback() unless err
 
-          # clean up failed install
-          return fs.remove @cacheDirectory(), (remove_err) =>
-            console.log "Failed to remove git directory: #{@cacheDirectory()}.\nYou should run 'tinker cache clear' to ensure the cache is not corrupted".red
-            callback(err)
+        # clean up failed install
+        return fs.remove @cacheDirectory(), (remove_err) =>
+          console.log "Failed to remove git directory: #{@cacheDirectory()}.\nYou should run 'tinker cache clear' to ensure the cache is not corrupted".red
+          callback(err)
 
   cacheDirectory: -> path.join(RepoUtils.cacheDirectory(), encodeURIComponent(RepoURL.parse(@get('url'))?.source))
   lockFile: -> "#{@cacheDirectory()}.lock"

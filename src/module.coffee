@@ -8,7 +8,7 @@ colors = require 'colors'
 
 GitRepo = require './repo'
 PackageUtils = require './lib/package_utils'
-RepoUtils = require './lib/repo_utils'
+RepoURL = require './lib/repo_url'
 Package = null
 Config = require './lib/config'
 moduleInit = require './init/module'
@@ -116,4 +116,4 @@ module.exports = class Module extends (require 'backbone').Model
           repositories.push(url) if res.status is 200
           callback()
 
-    queue.await (err) => callback(err, _.uniq(RepoUtils.normalizeURL(repository) for repository in repositories).sort())
+    queue.await (err) => callback(err, _.uniq(RepoURL.normalize(repository) for repository in repositories).sort())

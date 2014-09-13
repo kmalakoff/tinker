@@ -5,7 +5,7 @@ rpt = require 'read-package-tree'
 
 spawn = require '../spawn'
 Module = require '../../module'
-RepoUtils = require '../repo_utils'
+RepoURL = require '../repo_url'
 
 module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
@@ -39,7 +39,9 @@ module.exports = class Utils extends (require './index')
   @installModule: (pkg, module, callback) -> spawn "npm install #{module.get('name')}", Utils.cwd(module), callback
   @repositories: (pkg, module, callback) ->
     repositories = []
-    repositories.push(url) if RepoUtils.isURL(url = pkg.get('contents').dependencies?[module.get('name')])
-    repositories.push(url) if RepoUtils.isURL(url = module.get('contents').repository?.url)
-    repositories.push(url) if RepoUtils.isURL(url = module.get('contents')._resolved)
+    repositories.push(url) if RepoURL.isValid(url = pkg.get('contents').dependencies?[module.get('name')])
+    if RepoURL.isValid(url = module.get('contents').repository?.url)
+      repositories.push(url)
+      repositories.push("#{RepoURL.normalize(url)}##{module.get('contents').version}")
+
     callback(null, repositories)

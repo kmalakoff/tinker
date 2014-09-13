@@ -44,7 +44,7 @@ class ModuleInit
         name: 'url',
         message: 'Enter a repository url or type skip or leave empty to start again',
         validate: (value) ->
-          return true if !value or (value.toLowerCase() is 'skip') or RepoUtils.isURL(value)
+          return true if !value or (value.toLowerCase() is 'skip') or RepoURL.isValid(value)
           'Please enter a valid repository url'
       }
     ], (answers) ->

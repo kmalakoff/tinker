@@ -9,7 +9,7 @@ Vinyl = require 'vinyl-fs'
 spawn = require '../spawn'
 Module = require '../../module'
 jsonFileParse = require '../json_file_parse'
-RepoUtils = require '../repo_utils'
+RepoURL = require '../repo_url'
 
 module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
@@ -33,9 +33,9 @@ module.exports = class Utils extends (require './index')
   @installModule: (pkg, module, callback) -> spawn "bower install #{module.get('name')}", Utils.cwd(module), callback
   @repositories: (pkg, module, callback) ->
     repositories = []
-    repositories.push(url) if RepoUtils.isURL(url = pkg.get('contents').dependencies?[module.get('name')])
+    repositories.push(url) if RepoURL.isValid(url = pkg.get('contents').dependencies?[module.get('name')])
 
-    if RepoUtils.isURL(url = module.get('contents')._source)
+    if RepoURL.isValid(url = module.get('contents')._source)
       if resolution = module.get('contents')._resolution
         switch resolution.type
           when 'version' then repositories.push("#{url}##{resolution.tag}")
@@ -48,5 +48,5 @@ module.exports = class Utils extends (require './index')
       callback = _.once(callback)
       bower.commands.lookup(module.get('name'))
         .on('error', callback)
-        .on 'end', (info) => repositories.push(url) if RepoUtils.isURL(url = info?.url); callback()
+        .on 'end', (info) => repositories.push(url) if RepoURL.isValid(url = info?.url); callback()
     queue.await (err) -> callback(err, repositories)

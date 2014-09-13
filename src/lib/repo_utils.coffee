@@ -9,6 +9,3 @@ module.exports = class RepoUtils
   @cacheClear: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     fs.remove RepoUtils.cacheDirectory(), -> RepoUtils.cacheDirectoryEnsure(callback)
-
-  @isURL: (url) -> RepoURL.isValid(url)
-  @normalizeURL: (url) -> RepoURL.normalize(url)

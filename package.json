@@ -37,6 +37,7 @@
     "event-stream": "*",
     "fs-extra": "*",
     "inquirer": "*",
+    "lockfile": "^1.0.0",
     "minimatch": "*",
     "pwuid": "*",
     "queue-async": "*",

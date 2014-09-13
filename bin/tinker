@@ -119,7 +119,19 @@ program
     args = Array::splice.call(arguments, 1); args.pop()
     options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
     (require '../src').git args, options, (err) ->
-      message = "tinker git #{options.glob} #{args} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+      message = "tinker git #{options.glob} #{args.join(' ')} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+      if err then console.log(message.red) else console.log(message.green)
+      process.exit(0)
+
+program
+  .command('exec *')
+  .defaultOptions()
+  .description('Run a command command on a module')
+  .action (glob) ->
+    args = Array::splice.call(arguments, 1); args.pop()
+    options = _.defaults(CommanderUtils.extractCommandOptions(program), {glob: glob or '*'})
+    (require '../src').exec args, options, (err) ->
+      message = "tinker git #{options.glob} #{args.join(' ')} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 

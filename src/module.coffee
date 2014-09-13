@@ -78,6 +78,12 @@ module.exports = class Module extends (require 'backbone').Model
       return callback(new Error "Module: #{@get('name')} is not a git repo in #{@relativeDirectory()}") unless is_installed
       spawn "git #{args.join(' ')}", {cwd: @moduleDirectory()}, callback
 
+  exec: (args, options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 2
+    (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url = (config = Config.configByModule(@))?.url
+
+    spawn args.join(' '), {cwd: @moduleDirectory()}, callback
+
   moduleDirectory: -> path.dirname(@get('path'))
   relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = @get('cwd')) is 0; base
 

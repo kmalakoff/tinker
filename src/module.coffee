@@ -4,7 +4,7 @@ _ = require 'underscore'
 request = require 'superagent'
 Queue = require 'queue-async'
 minimatch = require 'minimatch'
-colors = require 'colors'
+require 'colors'
 
 GitRepo = require './repo'
 PackageUtils = require './lib/package_utils'

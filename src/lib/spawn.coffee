@@ -20,10 +20,10 @@ module.exports = (cmd, options={}, callback) ->
 
   child = spawn.apply(null, args)
   child.stderr.on 'error', callback
-  child.stderr.on 'data', (chunk) => process.stdout.write(chunk.toString())
+  child.stderr.on 'data', (chunk) => process.stdout.write(chunk.toString()) unless options.silent
   child.stderr.on 'end', callback
   child.stdout.on 'error', callback
-  child.stdout.on 'data', (chunk) => process.stdout.write(chunk.toString())
+  child.stdout.on 'data', (chunk) => process.stdout.write(chunk.toString()) unless options.silent
   child.stdout.on 'end', callback
   child.on 'error', callback
   child.on 'exit', -> callback()

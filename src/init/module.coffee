@@ -35,7 +35,7 @@ class ModuleInit
           when '' then return ModuleInit.selectRepository(module, options, callback)
           when 'skip' then return callback()
           when 'other' then return ModuleInit.enterRepository(module, options, callback)
-          else Config.configByModule(module, {name: module.get('name'), path: module.get('path'), url: url}).save (err) => callback(err, url)
+          else Config.saveModuleConfig(module.set({url: url}), callback)
 
   @enterRepository: (module, options, callback) ->
     inquirer.prompt [
@@ -51,6 +51,6 @@ class ModuleInit
       switch (url = answers.url).toLowerCase()
         when '' then return ModuleInit.selectRepository(module, options, callback)
         when 'skip' then return callback()
-        else Config.configByModule(module, {name: module.get('name'), path: module.get('path'), url: url}).save (err) => callback(err, url)
+        else Config.saveModuleConfig(module.set({url: url}), callback)
 
 module.exports = ModuleInit.init

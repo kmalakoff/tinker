@@ -21,6 +21,9 @@ module.exports = class Module extends (require 'backbone').Model
     package: -> ['belongsTo', Package = require './package']
   sync: (require 'backbone-orm').sync(Module)
 
+  @load: (options, callback) -> callback()
+
+
   @findByGlob: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     glob = options.glob or ''
@@ -36,6 +39,12 @@ module.exports = class Module extends (require 'backbone').Model
   init: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     moduleInit(@, options, callback)
+
+  toConfig: ->
+    config = _.pick(@attributes, 'name', 'path', 'url')
+    console.log "Module config is missing package #{@get('name')}".red unless pkg = @get('package')
+    config.package = pkg?.get('path')
+    return config
 
   tinkerOn: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

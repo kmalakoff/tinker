@@ -15,6 +15,8 @@ class Config extends (require './lib/fs_model')
       modules.sort (a, b) -> a.name.localeCompare(b.name)
       return @
 
+  saveModuleConfig: (module, callback) -> @configByModule(module, module.toConfig()).save(callback)
+
   optionsSetPackageTypes: (options) ->
     Package or= require './package'; package_types = @get('package_types')
     _.defaults(_.object(Package.TYPES, ((type in package_types) for type in Package.TYPES)), options)

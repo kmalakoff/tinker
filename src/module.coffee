@@ -4,6 +4,7 @@ _ = require 'underscore'
 request = require 'superagent'
 Queue = require 'queue-async'
 minimatch = require 'minimatch'
+inquirer = require 'inquirer'
 require 'colors'
 
 GitRepo = require './repo'
@@ -41,34 +42,58 @@ module.exports = class Module extends (require 'backbone').Model
     console.log "Tinkering on #{@get('name')} (#{@relativeDirectory()})"
     (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url = (config = Config.configByModule(@))?.url
 
-    @isInstalled true, (is_installed) =>
-      if is_installed
-        if options.force
-          console.log "Git: #{@get('name')} exists in #{@relativeDirectory()}. Forcing".yellow
-        else
-          console.log "Git: #{@get('name')} exists in #{@relativeDirectory()}. Skipping".green; return callback()
+    @installStatus (status) =>
+      console.log 'status', status
+      if status.git
+        unless options.force
+          console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
 
-      fs.exists @moduleDirectory(), (exists) =>
-        repo = new GitRepo({url})
-        repo[if exists then 'cloneGit' else 'clone'].call(repo, @moduleDirectory(), callback)
+        inquirer.prompt [{
+          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Replace .git folder']
+          message: "Module: #{@get('name')} .git exists in #{@relativeDirectory()}"}
+        ], (answers) =>
+          queue = new Queue(1)
+          switch answers.action
+            when 'Discard my changes'
+              queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
+              queue.defer (callback) => new GitRepo({url}).clone(@moduleDirectory(), callback)
+            when 'Replace .git folder'
+              queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
+              queue.defer (callback) => new GitRepo({url}).cloneGit(@moduleDirectory(), callback)
+          queue.await callback
+
+      else if status.directory
+        new GitRepo({url}).cloneGit(@moduleDirectory(), callback)
+
+      else
+        new GitRepo({url}).clone(@moduleDirectory(), callback)
 
   tinkerOff: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     console.log "Tinkering off #{@get('name')} (#{@relativeDirectory()})"
     (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url = (config = Config.configByModule(@))?.url
 
-    @isInstalled false, (is_installed) =>
-      if is_installed
-        if options.force
-          console.log "Module: #{@get('name')} does not exist in #{@relativeDirectory()}. Forcing".yellow
-        else
-          console.log "Module: #{@get('name')} does not exist in #{@relativeDirectory()}. Skipping".green; return callback()
+    @installStatus (status) =>
+      if status.git
+        fs.remove path.join(@moduleDirectory(), '.git'), callback
 
-      fs.exists @moduleDirectory(), (exists) =>
-        if exists
-          fs.remove path.join(@moduleDirectory(), '.git'), callback
-        else
-          @install(callback)
+      else if status.directory
+        unless options.force
+          console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
+
+        inquirer.prompt [{
+          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
+          message: "Module: #{@get('name')} folder exists in #{@relativeDirectory()}"}
+        ], (answers) =>
+          queue = new Queue(1)
+          switch answers.action
+            when 'Discard my changes'
+              queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
+              queue.defer (callback) => @install(callback)
+          queue.await callback
+
+      else
+        @install(callback)
 
   exec: (args, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
@@ -79,24 +104,19 @@ module.exports = class Module extends (require 'backbone').Model
   moduleDirectory: -> path.dirname(@get('path'))
   relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = @get('cwd')) is 0; base
 
-  isInstalled: (git_exists, callback) ->
-    fs.exists path.join(@moduleDirectory(), '.git'), (exists) =>
-      return callback(exists) if git_exists
-      return callback(false) if exists
-      fs.exists @moduleDirectory(), callback
+  installStatus: (callback) ->
+    queue = new Queue()
+    queue.defer (callback) => fs.exists path.join(@moduleDirectory(), '.git'), (exists) => callback(null, {git: exists})
+    queue.defer (callback) => fs.exists @moduleDirectory(), (exists) => callback(null, {directory: exists})
+    queue.await => callback(_.extend.apply(_, Array::slice.call(arguments, 1)))
 
   install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
-    fs.exists @moduleDirectory(), (exists) =>
-      return callback() if exists and not options.force
-      fs.remove @moduleDirectory(), (err) =>
-        return callback(err) if err
-
-        @get 'package', (err, pkg) =>
-          return callback(err) if err
-          return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
-          PackageUtils.apply(pkg, 'installModule', @, callback)
+    @get 'package', (err, pkg) =>
+      return callback(err) if err
+      return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
+      PackageUtils.apply(pkg, 'installModule', @, callback)
 
   repositories: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

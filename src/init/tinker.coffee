@@ -25,8 +25,8 @@ class TinkerInit
     console.log _.template(TEMPLATES.introduction)()
 
     queue = new Queue(1)
-    # queue.defer (callback) -> TinkerInit.configurePackageTypes(options, callback)
-    # queue.defer (callback) -> repositoryServicesInit(options, callback)
+    queue.defer (callback) -> TinkerInit.configurePackageTypes(options, callback)
+    queue.defer (callback) -> repositoryServicesInit(options, callback)
     queue.defer (callback) -> TinkerInit.configureModules(options, callback)
     queue.await callback
 

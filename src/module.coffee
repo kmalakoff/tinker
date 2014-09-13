@@ -65,9 +65,9 @@ module.exports = class Module extends (require 'backbone').Model
       @isInstalled false, (is_installed) =>
         if is_installed
           if options.force
-            console.log "Module: #{@get('name')} exists in #{@relativeDirectory()}. Forcing".yellow
+            console.log "Module: #{@get('name')} does not exist in #{@relativeDirectory()}. Forcing".yellow
           else
-            console.log "Module: #{@get('name')} exists in #{@relativeDirectory()}. Skipping".green; return callback()
+            console.log "Module: #{@get('name')} does not exist in #{@relativeDirectory()}. Skipping".green; return callback()
 
         fs.exists @moduleDirectory(), (exists) =>
           if exists
@@ -82,9 +82,7 @@ module.exports = class Module extends (require 'backbone').Model
     fs.exists path.join(@moduleDirectory(), '.git'), (exists) =>
       return callback(exists) if git_exists
       return callback(false) if exists
-      fs.exists @moduleDirectory(), (exists) =>
-        console.log 'exists', exists
-        callback(exists)
+      fs.exists @moduleDirectory(), callback
 
   install: (callback) ->
     @get 'package', (err, pkg) =>

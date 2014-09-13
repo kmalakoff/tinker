@@ -2,6 +2,8 @@ fs = require 'fs-extra'
 path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
+
+lockedExec = require './lib/locked_exec'
 RepoUtils = require './lib/repo_utils'
 RepoURL = require './lib/repo_url'
 spawn = require './lib/spawn'
@@ -21,9 +23,10 @@ module.exports = class GitRepo extends (require 'backbone').Model
     @ensureCached (err) =>
       return callback(err) if err
 
-      fs.remove destination, (err) =>
-        return callback(err) if err
-        fs.copy @cacheDirectory(), destination, callback
+      lockedExec @lockFile(), callback, (callback) =>
+        fs.remove destination, (err) =>
+          return callback(err) if err
+          fs.copy @cacheDirectory(), destination, callback
 
   cloneGit: (destination, callback) ->
     (console.log 'Missing url'; return callback()) unless @repoURL()
@@ -34,10 +37,11 @@ module.exports = class GitRepo extends (require 'backbone').Model
         @ensureCached (err) =>
           return callback(err) if err
 
-          queue = new Queue()
-          queue.defer (callback) => fs.copy path.join(@cacheDirectory(), '.git'), path.join(destination, '.git'), callback
-          queue.defer (callback) => fs.copy path.join(@cacheDirectory(), '.gitignore'), path.join(destination, '.gitignore'), -> callback()
-          queue.await callback
+          lockedExec @lockFile(), callback, (callback) =>
+            queue = new Queue()
+            queue.defer (callback) => fs.copy path.join(@cacheDirectory(), '.git'), path.join(destination, '.git'), callback
+            queue.defer (callback) => fs.copy path.join(@cacheDirectory(), '.gitignore'), path.join(destination, '.gitignore'), -> callback()
+            queue.await callback
 
       else
         return @clone(destination, callback)
@@ -51,9 +55,10 @@ module.exports = class GitRepo extends (require 'backbone').Model
 
       RepoUtils.cacheDirectoryEnsure (err) =>
         return callback(err) if err
-        spawn "git clone #{@repoURL()} #{@cacheDirectory()}", (err) => callback(err)
+        lockedExec @lockFile(), callback, (callback) => spawn "git clone #{@repoURL()} #{@cacheDirectory()}", (err) => callback(err)
 
   cacheDirectory: -> path.join(RepoUtils.cacheDirectory(), encodeURIComponent(@repoURL()))
+  lockFile: -> path.join(RepoUtils.cacheDirectory(), "#{encodeURIComponent(@repoURL())}.lock")
   repoURL: ->
     return unless url = @get('url')
     url = RepoURL.normalize(url) or url

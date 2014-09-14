@@ -24,6 +24,17 @@ module.exports = class Tinker
       else
         console.log Config.toJSON()
 
+  @update: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    options = _.defaults({force: true}, options)
+    Utils.load options, (err) ->
+      return callback(err) if err
+
+      Module.findByGlob options, (err, modules) ->
+        return callback(err) if err
+        return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
+        Async.eachSeries modules, ((module, callback) -> module.init options, callback), callback
+
   @install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     Utils.load options, (err) ->

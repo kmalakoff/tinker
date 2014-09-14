@@ -1,7 +1,7 @@
 {
   "name": "tinker",
   "version": "0.0.1",
-  "description": "Tinker with your bower and node modules",
+  "description": "Tinker with your bower and node modules!",
   "main": "tinker.js",
   "author": {
     "name": "Kevin Malakoff",

@@ -2,9 +2,6 @@ fs = require 'fs'
 path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
-Vinyl = require 'vinyl-fs'
-jsonFileParse = require './lib/json_file_parse'
-es = require 'event-stream'
 
 {File} = require 'gulp-util'
 Queue = require 'queue-async'
@@ -24,28 +21,10 @@ module.exports = class Package extends (require 'backbone').Model
     {type: 'bower', file_name: 'bower.json'}
   ]
 
-  @load: (options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 1
-
-    Package.destroy (err) ->
-      return callback(err) if err
-      return callback(null, []) unless (src = Package.optionsToDirectories(options)).length
-
-      Vinyl.src(src)
-        .pipe jsonFileParse()
-        .pipe es.writeArray (err, files) ->
-          return callback(err) if err
-          queue = new Queue()
-          for file in files
-            do (file) -> queue.defer (callback) ->
-              file_name = path.basename(file.path)
-              info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
-
-              new Package(_.extend({name: file.contents.name, type: info.type}, _.pick(file, 'cwd', 'path', 'contents'))).save (err, pkg) ->
-                return callback(err) if err
-                pkg.loadModules (err) -> callback(err, pkg)
-
-          queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
+  @createByFile: (file, callback) ->
+    file_name = path.basename(file.path)
+    info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
+    new Package(_.extend({name: file.contents.name, type: info.type}, _.pick(file, 'cwd', 'path', 'contents'))).save(callback)
 
   @optionsToTypes: (options) ->
     if _.size(_.pick(options, _.pluck(Package.TYPES, 'type')))

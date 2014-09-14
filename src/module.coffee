@@ -21,8 +21,18 @@ module.exports = class Module extends (require 'backbone').Model
     package: -> ['belongsTo', Package = require './package']
   sync: (require 'backbone-orm').sync(Module)
 
-  @load: (options, callback) -> callback()
+  @load: (src, callback) ->
+    Vinyl.src(src)
+      .pipe jsonFileParse()
+      .pipe es.writeArray (err, files) ->
+        return callback(err) if err
+        package_queue = new Queue()
+        for file in files
+          do (file) -> package_queue.defer (callback) -> Module.createByFile(file, callback)
+        package_queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
 
+  @createByFile: (file, callback) ->
+    new Module(_.extend({name: file.contents.name}, _.pick(file, 'cwd', 'path', 'contents'))).save(callback)
 
   @findByGlob: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -65,17 +75,17 @@ module.exports = class Module extends (require 'backbone').Model
           switch answers.action
             when 'Discard my changes'
               queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
-              queue.defer (callback) => new GitRepo({url}).clone(@moduleDirectory(), callback)
+              queue.defer (callback) => RepoUtils.clone(url, @moduleDirectory(), callback)
             when 'Replace .git folder'
               queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
-              queue.defer (callback) => new GitRepo({url}).cloneGit(@moduleDirectory(), callback)
+              queue.defer (callback) => RepoUtils.cloneGit(url, @moduleDirectory(), callback)
           queue.await callback
 
       else if status.directory
-        new GitRepo({url}).cloneGit(@moduleDirectory(), callback)
+        RepoUtils.cloneGit(url, @moduleDirectory(), callback)
 
       else
-        new GitRepo({url}).clone(@moduleDirectory(), callback)
+        RepoUtils.clone(url, @moduleDirectory(), callback)
 
   tinkerOff: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

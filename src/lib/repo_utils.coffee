@@ -20,9 +20,11 @@ module.exports = class RepoUtils
     else
       path.join(pwuid().dir, '.tinker', 'cache')
 
+  @lockFile: (url) -> "#{RepoUtils.cacheDirectory()}.lock"
+
   @clone: (url, destination, callback) ->
     return callback(new Error "Invalid url: #{url}") unless url = RepoURL.parse(url)?.source
-    cache_directory = RepoUtils.cacheDirectory()
+    cache_directory = RepoUtils.cacheDirectory(url)
 
     @ensureCached url, (err) =>
       return callback(err) if err
@@ -39,8 +41,8 @@ module.exports = class RepoUtils
       # only clone the .git and .gitignore files
       if exists
         queue = new Queue(1)
-        queue.defer (callback) => RepoUtils.ensureCached(callback)
-        queue.defer (callback) => RepoUtils.updateDestination(destination, callback)
+        queue.defer (callback) => RepoUtils.ensureCached(url, callback)
+        queue.defer (callback) => RepoUtils.updateDestination(url, destination, callback)
         queue.await callback
 
       else
@@ -48,7 +50,7 @@ module.exports = class RepoUtils
 
   @updateDestination: (url, destination, callback) ->
     lockedExec RepoUtils.lockFile(url), callback, (callback) =>
-      cache_directory = RepoUtils.cacheDirectory()
+      cache_directory = RepoUtils.cacheDirectory(url)
 
       queue = new Queue(1)
       queue.defer (callback) =>
@@ -60,9 +62,9 @@ module.exports = class RepoUtils
       queue.await callback
 
   @ensureCached: (url, options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 1
+    [options, callback] = [{}, options] if arguments.length is 2
     return callback(new Error "Invalid url: #{url}") unless url = RepoURL.parse(url)?.source
-    cache_directory = RepoUtils.cacheDirectory()
+    cache_directory = RepoUtils.cacheDirectory(url)
 
     lockedExec RepoUtils.lockFile(url), callback, (callback) =>
       queue = new Queue(1)

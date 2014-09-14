@@ -27,8 +27,7 @@ module.exports = class Utils extends (require './index')
         queue = new Queue()
         for module in collectModules(data)
           do (module) -> queue.defer (callback) ->
-            # TODO: BackboneORM - why is two-step save needed
-            module.save (err, module) -> module.save {package: pkg}, callback
+            Module.createByFile file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)
 
         queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
 

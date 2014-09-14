@@ -19,8 +19,7 @@ module.exports = class Utils extends (require './index')
       Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', '.bower.json'))
         .pipe jsonFileParse()
         .pipe es.map (file, callback) ->
-          # TODO: BackboneORM - why is two-step save needed
-          new Module(_.extend({name: file.contents.name}, _.pick(file, 'cwd', 'path', 'contents'))).save (err, module) -> module.save {package: pkg}, callback
+          Module.createByFile file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)
         .pipe es.writeArray callback
 
   @install: (pkg, callback) ->

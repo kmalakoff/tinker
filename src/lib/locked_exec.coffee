@@ -7,7 +7,7 @@ LOCK_OPTIONS.stale = 3*LOCK_OPTIONS.wait
 LOCK_OPTIONS.retries = 3*(LOCK_OPTIONS.wait/LOCK_OPTIONS.retryWait)
 
 module.exports = (file_name, options, callback, fn) ->
-  [options, callback, fn] = [LOCK_OPTIONS, options, callback] if arguments.length is 3
+  [options, callback, fn] = [{}, options, callback] if arguments.length is 3
   options = _.extend({}, LOCK_OPTIONS, options)
 
   lockfile.lock file_name, options, (err) =>

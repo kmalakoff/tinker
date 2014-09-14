@@ -9,15 +9,16 @@ process.bin = process.title = 'tinker'
 
 program.constructor::defaultOptions = ->
   @
-    .option('-d, --directory <name>', 'Directory')
+    .option('-d, --directory <name>', 'Run in a specific directory')
     .option('-f, --force', 'Force the operation')
-    .option('-g, --glob', 'Add a glob')
     .option('-b, --bower', 'Bower only')
     .option('-n, --npm', 'NPM only')
     # .option('-c, --component', 'Component.io only')
 
 program
-  .version('0.0.1')
+  .version(require('../package.json').version)
+  .usage('[options] [command]')
+  .defaultOptions()
 
 program
   .command('init [glob]')
@@ -124,5 +125,7 @@ program
   .defaultOptions()
   .description('Run a command command on a module')
   .action -> process.argv.splice(2, 0, 'exec'); program.parse(process.argv) # default to exec
+
+process.argv.push('-h') if process.argv.length is 2
 
 program.parse(process.argv)

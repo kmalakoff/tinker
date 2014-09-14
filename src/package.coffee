@@ -53,16 +53,18 @@ module.exports = class Package extends (require 'backbone').Model
 
     # load modules from config
     for module_info in _.filter(Config.get('modules') or [], (module) => module.package is @get('path'))
-      do (module_info) -> queue.defer (callback) =>
+      do (module_info) => queue.defer (callback) =>
         Module.findOrCreate {path: module_info.path}, (err, module) =>
           return callback(err) if err
           return callback(null, module) if module.get('content') and module.get('package') is @
 
-          console.log module.attributes?.package?.attributes
-          module.set({package: @})
           unless module.get('content')
-            try Module.findOrCreateByFile({path: module_info.path, contents: require(module_info.path)}, callback)
-            catch err then console.log "Warning: failed to load #{module_info.path}. Is it installed?".yellow; callback()
+            try
+              content = require(module_info.path)
+              module.set({content: content, name: content.name})
+            catch err then console.log "Warning: failed to load #{module_info.path}. Is it installed?".yellow
+
+          module.save({package: @}, callback)
 
     queue.await callback
 
@@ -76,7 +78,7 @@ module.exports = class Package extends (require 'backbone').Model
 
         inquirer.prompt [{
           type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install modules one-by-one']
-          message: "Module: #{@get('name')} .git exists in #{path.dirname(@get('path'))}"}
+          message: "Package: #{@get('name')} already installed in #{modules_directory}"}
         ], (answers) =>
           switch answers.action
             when 'Discard my changes'
@@ -89,8 +91,9 @@ module.exports = class Package extends (require 'backbone').Model
                 return callback(err) if err
                 queue = new Queue(1)
                 for module in modules
-                  do (module) => queue.defer (callback) => PackageUtils.lookup(@, 'installModule')(module, callback)
+                  do (module) => queue.defer (callback) => module.install(options, callback)
                 queue.await callback
+            else callback()
 
       else
         doInstall(@, callback)

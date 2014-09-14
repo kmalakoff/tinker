@@ -1,14 +1,14 @@
 fs = require 'fs-extra'
 path = require 'path'
 _ = require 'underscore'
-es = require 'event-stream'
 Queue = require 'queue-async'
-bower = require 'bower'
 Vinyl = require 'vinyl-fs'
+es = require 'event-stream'
+jsonFileParse = require '../json_file_parse'
+bower = require 'bower'
 
 spawn = require '../spawn'
 Module = require '../../module'
-jsonFileParse = require '../json_file_parse'
 RepoURL = require '../repo_url'
 
 module.exports = class Utils extends (require './index')

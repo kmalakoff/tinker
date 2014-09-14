@@ -15,6 +15,12 @@ Config = require './config'
 moduleInit = require './init/module'
 spawn = require './lib/spawn'
 
+doInstall = (module, callback) ->
+  module.get 'package', (err, pkg) =>
+    return callback(err) if err
+    return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
+    PackageUtils.lookup(pkg, 'installModule')(module, callback)
+
 module.exports = class Module extends (require 'backbone').Model
   model_name: 'Module'
   schema:
@@ -89,7 +95,7 @@ module.exports = class Module extends (require 'backbone').Model
 
       else if status.directory
         unless options.force
-          console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
+          console.log "Module: #{@get('name')} folder exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
 
         inquirer.prompt [{
           type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
@@ -123,10 +129,28 @@ module.exports = class Module extends (require 'backbone').Model
   install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
-    @get 'package', (err, pkg) =>
-      return callback(err) if err
-      return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
-      PackageUtils.lookup(pkg, 'installModule')(@, callback)
+    fs.exists module_directory = @moduleDirectory(), (exists) =>
+      if exists
+        unless options.force
+          console.log "Module: #{@get('name')} already installed in #{module_directory}. Skipping. Use --force for replacement options.".yellow; return callback()
+
+        inquirer.prompt [{
+          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
+          message: "Module: #{@get('name')} already installed in #{module_directory}"}
+        ], (answers) =>
+          switch answers.action
+            when 'Discard my changes'
+              queue = new Queue(1)
+              queue.defer (callback) => @uninstall(callback)
+              queue.defer (callback) => doInstall(@, callback)
+              queue.await callback
+            else callback()
+      else
+        doInstall(@, callback)
+
+  uninstall: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    fs.remove(path.dirname(@get('path')), callback)
 
   repositories: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

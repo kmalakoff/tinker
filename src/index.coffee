@@ -29,7 +29,7 @@ module.exports = class Tinker
     Utils.load options, (err) ->
       return callback(err) if err
 
-      Package.all (err, packages) ->
+      Package.cursor().include('modules').toModels (err, packages) ->
         return callback(err) if err
         Async.each packages, ((pkg, callback) -> pkg.install(options, callback)), callback
 
@@ -38,7 +38,7 @@ module.exports = class Tinker
     Utils.load options, (err) ->
       return callback(err) if err
 
-      Package.all (err, packages) ->
+      Package.cursor().include('modules').toModels (err, packages) ->
         return callback(err) if err
         Async.each packages, ((pkg, callback) -> pkg.uninstall(options, callback)), callback
 

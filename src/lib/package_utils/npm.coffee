@@ -23,8 +23,7 @@ module.exports = class Utils extends (require './index')
 
       queue = new Queue()
       for module in collectModules(data)
-        do (module) -> queue.defer (callback) ->
-          Module.findOrCreateByFile file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)
+        do (module) -> queue.defer (callback) -> module.save({package: pkg}, callback)
 
       queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
 

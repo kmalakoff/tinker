@@ -56,78 +56,80 @@ module.exports = class Module extends (require 'backbone').Model
 
   tinkerOn: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    console.log "Tinkering on #{@get('name')} (#{@relativeDirectory()})"
-    (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url = (config = Config.configByModule(@))?.url
+    @ensureInitialized options, (initialized) =>
+      return callback() unless url = (config = Config.configByModule(@))?.url
+      console.log "Tinkering on #{@get('name')} (#{@relativeDirectory()})"
 
-    @installStatus (status) =>
-      if status.git
-        unless options.force
-          console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
+      @installStatus (status) =>
+        if status.git
+          unless options.force
+            console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
 
-        inquirer.prompt [{
-          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Replace .git folder']
-          message: "Module: #{@get('name')} .git exists in #{@relativeDirectory()}"}
-        ], (answers) =>
-          queue = new Queue(1)
-          switch answers.action
-            when 'Discard my changes'
-              queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
-              queue.defer (callback) => RepoUtils.clone(url, @moduleDirectory(), callback)
-            when 'Replace .git folder'
-              queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
-              queue.defer (callback) => RepoUtils.cloneGit(url, @moduleDirectory(), callback)
-          queue.await callback
+          inquirer.prompt [{
+            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Replace .git folder']
+            message: "Module: #{@get('name')} .git exists in #{@relativeDirectory()}"}
+          ], (answers) =>
+            queue = new Queue(1)
+            switch answers.action
+              when 'Discard my changes'
+                queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
+                queue.defer (callback) => RepoUtils.clone(url, @moduleDirectory(), callback)
+              when 'Replace .git folder'
+                queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
+                queue.defer (callback) => RepoUtils.cloneGit(url, @moduleDirectory(), callback)
+            queue.await callback
 
-      else if status.directory
-        inquirer.prompt [{
-          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install .git folder']
-          message: "Module: #{@get('name')} exists in #{@relativeDirectory()}"}
-        ], (answers) =>
-          queue = new Queue(1)
-          switch answers.action
-            when 'Discard my changes'
-              queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
-              queue.defer (callback) => RepoUtils.clone(url, @moduleDirectory(), callback)
-            when 'Install .git folder'
-              queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
-              queue.defer (callback) => RepoUtils.cloneGit(url, @moduleDirectory(), callback)
-          queue.await callback
+        else if status.directory
+          inquirer.prompt [{
+            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install .git folder']
+            message: "Module: #{@get('name')} exists in #{@relativeDirectory()}"}
+          ], (answers) =>
+            queue = new Queue(1)
+            switch answers.action
+              when 'Discard my changes'
+                queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
+                queue.defer (callback) => RepoUtils.clone(url, @moduleDirectory(), callback)
+              when 'Install .git folder'
+                queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
+                queue.defer (callback) => RepoUtils.cloneGit(url, @moduleDirectory(), callback)
+            queue.await callback
 
-      else
-        RepoUtils.clone(url, @moduleDirectory(), callback)
+        else
+          RepoUtils.clone(url, @moduleDirectory(), callback)
 
   tinkerOff: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    console.log "Tinkering off #{@get('name')} (#{@relativeDirectory()})"
-    (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url = (config = Config.configByModule(@))?.url
+    @ensureInitialized options, (initialized) =>
+      return callback() unless url = (config = Config.configByModule(@))?.url
+      console.log "Tinkering off #{@get('name')} (#{@relativeDirectory()})"
 
-    @installStatus (status) =>
-      if status.git
-        fs.remove path.join(@moduleDirectory(), '.git'), callback
+      @installStatus (status) =>
+        if status.git
+          fs.remove path.join(@moduleDirectory(), '.git'), callback
 
-      else if status.directory
-        unless options.force
-          console.log "Module: #{@get('name')} folder exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
+        else if status.directory
+          unless options.force
+            console.log "Module: #{@get('name')} folder exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
 
-        inquirer.prompt [{
-          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
-          message: "Module: #{@get('name')} folder exists in #{@relativeDirectory()}"}
-        ], (answers) =>
-          queue = new Queue(1)
-          switch answers.action
-            when 'Discard my changes'
-              queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
-              queue.defer (callback) => @install(callback)
-          queue.await callback
+          inquirer.prompt [{
+            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
+            message: "Module: #{@get('name')} folder exists in #{@relativeDirectory()}"}
+          ], (answers) =>
+            queue = new Queue(1)
+            switch answers.action
+              when 'Discard my changes'
+                queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
+                queue.defer (callback) => @install(callback)
+            queue.await callback
 
-      else
-        @install(callback)
+        else
+          @install(callback)
 
   exec: (args, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
-    (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url = (config = Config.configByModule(@))?.url
-
-    spawn args.join(' '), {cwd: @moduleDirectory()}, callback
+    @ensureInitialized options, (initialized) =>
+      return callback() unless initialized
+      spawn args.join(' '), {cwd: @moduleDirectory()}, callback
 
   moduleDirectory: -> path.dirname(@get('path'))
   relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = @get('cwd')) is 0; base
@@ -168,7 +170,6 @@ module.exports = class Module extends (require 'backbone').Model
     [options, callback] = [{}, options] if arguments.length is 1
 
     repositories = []
-
     queue = new Queue()
     queue.defer (callback) =>
       @get 'package', (err, pkg) =>
@@ -186,3 +187,10 @@ module.exports = class Module extends (require 'backbone').Model
           callback()
 
     queue.await (err) => callback(err, _.uniq(RepoURL.normalize(repository) for repository in repositories).sort())
+
+  ensureInitialized: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    return callback(!!url) if url = (config = Config.configByModule(@))?.url
+    @init options, (err) =>
+      console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Do you need to initialize it?".yellow unless url = (config = Config.configByModule(@))?.url
+      callback(!!url)

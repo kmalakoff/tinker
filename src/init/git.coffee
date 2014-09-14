@@ -1,8 +1,7 @@
 fs = require 'fs-extra'
-path = require 'path'
+path = require 'path-extra'
 _ = require 'underscore'
 inquirer = require 'inquirer'
-pwuid = require 'pwuid'
 Queue = require 'queue-async'
 
 spawn = require '../lib/spawn'
@@ -24,20 +23,15 @@ class GitInit
   @init: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
-    gitignore = path.join(pwuid().dir, '.gitignore_global')
+    gitignore = path.join(path.homedir(), '.gitignore_global')
     fs.readFile gitignore, 'utf8', (err, contents) ->
       contents or= ''
       added = (file for file in GLOBAL_IGNORE_FILES when contents.indexOf(file) < 0)
-      return callback() if not added.length and not options.force
+      return callback() if not added.length
 
       console.log _.template(TEMPLATES.introduction)(module)
 
-      inquirer.prompt [
-       {
-          type: 'confirm',
-          name: 'allow',
-          message: "Do you want to add #{GLOBAL_IGNORE_FILES.join(' and ')} to #{gitignore}"
-        }
+      inquirer.prompt [{type: 'confirm', name: 'allow', message: "Do you want to add #{GLOBAL_IGNORE_FILES.join(' and ')} to #{gitignore}"}
       ], (answers) ->
         return callback() unless answers.allow
 

@@ -10,6 +10,7 @@ TEMPLATES =
   introduction: """
 
     ****************
+    You can register your favorite repository service to find your repositories and forks. For example: https://github.com/yourname
     """
 
 class RepositoryServicesInit
@@ -17,7 +18,8 @@ class RepositoryServicesInit
     [options, callback] = [{}, options] if arguments.length is 1
 
     console.log _.template(TEMPLATES.introduction)(module)
-    console.log "Known repository services: #{repository_services.join(', ')}" if (repository_services = Config.get('repository_services') or []).length
+    console.log "Currently registered repository services: #{repository_services.join(', ')}" if (repository_services = Config.get('repository_services') or []).length
+    console.log ''
     RepositoryServicesInit.enterRepositoryService(options, repository_services, callback)
 
   @enterRepositoryService: (options, initial_repository_services, callback) ->
@@ -25,7 +27,7 @@ class RepositoryServicesInit
      {
         type: 'input',
         name: 'url',
-        message: 'Enter a repository service url for fork discovery (empty for next)',
+        message: 'Enter a repository service (leave empy to skip)',
         validate: (value) ->
           return true if !value or (value.toLowerCase() is 'skip') or validator.isURL(value)
           'Please enter a valid repository service url'

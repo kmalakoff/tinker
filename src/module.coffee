@@ -38,8 +38,8 @@ module.exports = class Module extends (require 'backbone').Model
 
     Module.cursor({'package.type': {$in: _.pluck(Package.optionsToTypes(options), 'type')}}).toModels (err, modules) ->
       return callback(err) if err
-      if glob.indexOf('*') >= 0
-        return callback(null, modules) if glob is '*' # all
+      return callback(null, modules) if glob is '*'
+      if glob.indexOf('**') >= 0
         callback(null, (module for module in modules when minimatch(module.get('path'), glob)))
       else
         callback(null, (module for module in modules when minimatch(module.get('name'), glob)))
@@ -132,7 +132,7 @@ module.exports = class Module extends (require 'backbone').Model
       spawn args.join(' '), {cwd: @moduleDirectory()}, callback
 
   moduleDirectory: -> path.dirname(@get('path'))
-  relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = @get('cwd')) is 0; base
+  relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = process.cwd()) is 0; base
 
   installStatus: (callback) ->
     queue = new Queue()
@@ -146,11 +146,11 @@ module.exports = class Module extends (require 'backbone').Model
     fs.exists module_directory = @moduleDirectory(), (exists) =>
       if exists
         unless options.force
-          console.log "Module: #{@get('name')} already installed in #{module_directory}. Skipping. Use --force for replacement options.".yellow; return callback()
+          console.log "Module: #{@get('name')} already installed in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
 
         inquirer.prompt [{
           type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
-          message: "Module: #{@get('name')} already installed in #{module_directory}"}
+          message: "Module: #{@get('name')} already installed in #{@relativeDirectory()}"}
         ], (answers) =>
           switch answers.action
             when 'Discard my changes'

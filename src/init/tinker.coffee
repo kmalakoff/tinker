@@ -3,8 +3,8 @@ Queue = require 'queue-async'
 Async = require 'async'
 inquirer = require 'inquirer'
 
-Tinker = null
 Config = require '../config'
+Package = require '../package'
 Module = require '../module'
 Utils = require '../lib/utils'
 
@@ -16,9 +16,13 @@ TEMPLATES =
     ****************
     """
 
+  install: """
+
+    ****************
+    """
+
 class TinkerInit
   @init: (options, callback) ->
-    Tinker or= require '..'
     [options, callback] = [{}, options] if arguments.length is 1
 
     console.log _.template(TEMPLATES.introduction)()
@@ -27,6 +31,15 @@ class TinkerInit
     queue.defer (callback) -> TinkerInit.configurePackageTypes(options, callback)
     queue.defer (callback) -> (require './repository_services')(options, callback)
     queue.defer (callback) -> (require './git')(options, callback)
+    queue.defer (callback) ->
+      console.log _.template(TEMPLATES.install)()
+      inquirer.prompt [{type: 'confirm', name: 'allow', message: "Do you want to install #{(Config.get('package_types') or []).join(' and ')} packages to start tinkering?"}
+      ], (answers) ->
+        return callback() unless answers.allow
+        Package.cursor().include('modules').toModels (err, packages) ->
+          return callback(err) if err
+          Async.eachSeries packages, ((pkg, callback) -> pkg.install(options, callback)), callback
+    queue.defer (callback) -> Utils.load(options, callback) # reload
     queue.defer (callback) -> TinkerInit.configureModules(options, callback)
     queue.await callback
 
@@ -42,12 +55,7 @@ class TinkerInit
         validate: (answer) -> if answer.length < 1 then 'You must choose at least package type' else true
       }
     ],
-    (answers) ->
-      queue = new Queue(1)
-      queue.defer (callback) -> Config.save(answers, callback)
-      queue.defer (callback) -> Tinker.install(options, callback)
-      queue.defer (callback) -> Utils.load(options, callback) # reload
-      queue.await callback
+    (answers) -> Config.save(answers, callback)
 
   @configureModules: (options, callback) ->
     Module.findByGlob (options = Config.optionsSetPackageTypes(options)), (err, modules) ->

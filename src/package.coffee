@@ -4,7 +4,7 @@ _ = require 'underscore'
 Queue = require 'queue-async'
 inquirer = require 'inquirer'
 
-File = require 'vinyl'
+{File} = require 'gulp-util'
 Queue = require 'queue-async'
 Module = null
 Config = require './config'
@@ -54,7 +54,7 @@ module.exports = class Package extends (require 'backbone').Model
     # load modules from config
     for module_info in _.filter(Config.get('modules') or [], (module) => module.package is @get('path'))
       do (module_info) => queue.defer (callback) =>
-        Module.findOrCreate {path: module_info.path}, (err, module) =>
+        Module.findOrCreate _.pick(module_info, 'name', 'path'), (err, module) =>
           return callback(err) if err
           return callback(null, module) if module.get('content') and module.get('package') is @
 
@@ -62,23 +62,25 @@ module.exports = class Package extends (require 'backbone').Model
             try
               content = require(module_info.path)
               module.set({content: content, name: content.name})
-            catch err then console.log "Warning: failed to load #{module_info.path}. Is it installed?".yellow
 
           module.save({package: @}, callback)
 
     queue.await callback
 
+  moduleDirectory: -> path.dirname(@get('path'))
+  relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = process.cwd()) is 0; base
   install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
     fs.exists (modules_directory = PackageUtils.lookup(@, 'modulesDirectory')()), (exists) =>
       if exists
         unless options.force
-          console.log "Package: #{@get('name')} already installed in #{modules_directory}. Skipping. Use --force for replacement options.".yellow; return callback()
+          console.log "Package: #{@get('name')} already installed in #{@relativeDirectory() or 'cwd'}. Skipping. Use --force for replacement options.".yellow; return callback()
 
+        console.log ''
         inquirer.prompt [{
           type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install modules one-by-one']
-          message: "Package: #{@get('name')} already installed in #{modules_directory}"}
+          message: "Package: #{@get('name')} already installed in #{@relativeDirectory() or 'cwd'}"}
         ], (answers) =>
           switch answers.action
             when 'Discard my changes'

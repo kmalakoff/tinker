@@ -2,7 +2,7 @@ fs = require 'fs-extra'
 path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
-pwuid = require 'pwuid'
+path = require 'path-extra'
 require 'colors'
 
 lockedExec = require './locked_exec'
@@ -16,9 +16,9 @@ module.exports = class RepoUtils
 
   @cacheDirectory: (url) ->
     if url
-      path.join(pwuid().dir, '.tinker', 'cache', encodeURIComponent(RepoURL.parse(url)?.source))
+      path.join(path.homedir(), '.tinker', 'cache', encodeURIComponent(RepoURL.parse(url)?.source))
     else
-      path.join(pwuid().dir, '.tinker', 'cache')
+      path.join(path.homedir(), '.tinker', 'cache')
 
   @lockFile: (url) -> "#{RepoUtils.cacheDirectory()}.lock"
 

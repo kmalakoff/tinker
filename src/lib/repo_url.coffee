@@ -14,7 +14,8 @@ module.exports = class RepoURL
     try
       parts = endpointParser.decompose(url)
       parts.source = "https://#{match[1]}/#{match[2]}" if match = REGEX.exec(parts.source?.replace(/\.git(#.*)?$/, '') or '')
-      return parts
+      parts[key] = '' for key, value of parts when value is '*'
+      return parts if parts.source
 
   @format: (parts) -> return unless parts; endpointParser.compose(parts)
   @normalize: (url) -> RepoURL.format(RepoURL.parse(url))

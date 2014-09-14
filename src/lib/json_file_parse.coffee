@@ -1,5 +1,5 @@
 _ = require 'underscore'
-{File} = gutil = require 'gulp-util'
+gutil = require 'gulp-util'
 es = require 'event-stream'
 
 module.exports = -> es.map (file, callback) -> file.pipe es.wait (err, contents) ->

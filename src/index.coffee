@@ -43,7 +43,7 @@ module.exports = class Tinker
       if options.glob is '*'
         Package.cursor().include('modules').toModels (err, packages) ->
           return callback(err) if err
-          Async.each packages, ((pkg, callback) -> pkg.install(options, callback)), callback
+          Async.eachSeries packages, ((pkg, callback) -> pkg.install(options, callback)), callback
       else
         Module.findByGlob options, (err, modules) ->
           return callback(err) if err
@@ -58,7 +58,7 @@ module.exports = class Tinker
       if options.glob is '*'
         Package.cursor().include('modules').toModels (err, packages) ->
           return callback(err) if err
-          Async.each packages, ((pkg, callback) -> pkg.uninstall(options, callback)), callback
+          Async.eachSeries packages, ((pkg, callback) -> pkg.uninstall(options, callback)), callback
       else
         Module.findByGlob options, (err, modules) ->
           return callback(err) if err
@@ -73,7 +73,7 @@ module.exports = class Tinker
       Module.findByGlob options, (err, modules) ->
         return callback(err) if err
         return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
-        Async.each modules, ((module, callback) -> module.tinkerOn options, callback), callback
+        Async.eachSeries modules, ((module, callback) -> module.tinkerOn options, callback), callback
 
   @off: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -83,7 +83,7 @@ module.exports = class Tinker
       Module.findByGlob options, (err, modules) ->
         return callback(err) if err
         return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
-        Async.each modules, ((module, callback) -> module.tinkerOff options, callback), callback
+        Async.eachSeries modules, ((module, callback) -> module.tinkerOff options, callback), callback
 
   @exec: (args, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2

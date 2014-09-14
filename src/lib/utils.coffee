@@ -18,7 +18,9 @@ module.exports = class Utils
     queue.defer (callback) -> Module.destroy(callback)
 
     queue.defer (callback) ->
-      Vinyl.src(Package.optionsToDirectories(options))
+      return callback() unless (src = Package.optionsToDirectories(options)).length
+
+      Vinyl.src(src)
         .pipe jsonFileParse()
         .pipe es.writeArray (err, files) ->
           return callback(err) if err

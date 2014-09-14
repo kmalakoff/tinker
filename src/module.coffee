@@ -136,7 +136,11 @@ module.exports = class Module extends (require 'backbone').Model
       return callback() unless initialized
       console.log '\n****************'
       console.log "Exec #{args.join(' ')} on #{@get('name')} (#{@relativeDirectory()})"
-      spawn args.join(' '), {cwd: @moduleDirectory()}, callback
+      commands = args.join(' ').split(';')
+      queue = new Queue(1)
+      for command in commands
+        do (command) => queue.defer (callback) => spawn command, {cwd: @moduleDirectory()}, callback
+      queue.await callback
 
   moduleDirectory: -> path.dirname(@get('path'))
   relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = process.cwd()) is 0; base

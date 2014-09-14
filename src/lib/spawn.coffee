@@ -1,7 +1,7 @@
 {spawn} = require 'child_process'
 _ = require 'underscore'
 
-module.exports = (cmd, options={}, callback) ->
+module.exports = (command, options={}, callback) ->
   [options, callback] = [{}, options] if arguments.length is 2
 
   done = callback
@@ -12,8 +12,8 @@ module.exports = (cmd, options={}, callback) ->
     return if --call_count > 0
     was_called = true; return done()
 
-  cmd_parts = cmd.split(' ')
-  args = [cmd_parts.shift(), cmd_parts]
+  command_parts = command.trim().split(' ')
+  args = [command_parts.shift(), command_parts]
   options = _.clone(options)
   options.env = if options.env then _.extend({}, options.env, process.env) else process.env
   args.push(options)

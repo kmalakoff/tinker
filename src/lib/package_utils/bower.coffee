@@ -13,23 +13,20 @@ RepoURL = require '../repo_url'
 
 module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
-    Module.destroy {package_id: pkg.id}, (err) ->
-      return callback(err) if err
+    Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', 'bower.json'))
+      .pipe jsonFileParse()
+      .pipe es.map (file, callback) ->
+        Module.findOrCreateByFile file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)
+      .pipe es.writeArray callback
 
-      Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', 'bower.json'))
-        .pipe jsonFileParse()
-        .pipe es.map (file, callback) ->
-          Module.createByFile file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)
-        .pipe es.writeArray callback
-
-  @install: (pkg, callback) ->
-    spawn 'bower install', Utils.cwd(pkg), (err) ->
-      return callback(err) if err
-      Utils.loadModules(pkg, callback)
+  @install: (pkg, callback) -> spawn 'bower install', Utils.cwd(pkg), callback
   @uninstall: (pkg, callback) -> fs.remove Utils.modulesDirectory(pkg), callback
 
   @modulesDirectory: (pkg) -> path.join(Utils.root(pkg), 'bower_components')
-  @installModule: (pkg, module, callback) -> spawn "bower install #{module.get('name')}", Utils.cwd(module), callback
+  @installModule: (pkg, module, callback) ->
+    cwd = path.dirname(pkg.get('path'))
+    fs.ensureDir cwd, -> spawn "bower install #{module.get('name')}", {cwd: cwd}, callback
+
   @repositories: (pkg, module, callback) ->
     repositories = []
     repositories.push(url) if RepoURL.isValid(url = pkg.get('contents').dependencies?[module.get('name')])

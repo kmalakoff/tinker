@@ -1,16 +1,13 @@
 path = require 'path'
 
-module.exports = class Utils
-  @call: (pkg, name, args) -> Utils.apply.apply(Utils, [pkg, name].concat(Array::slice.call(args)))
+cache = {}
 
-  @apply: (_args_) ->
-    args = Array::slice.call(arguments); pkg = args[0]; name = args[1]; callback = args[args.length-1]
-    return callback(new Error "Package missing type for calling #{name}") unless type = pkg.get('type')
-    try
-      _Utils = require "./#{type}"
-      return callback(new Error "Utils function not found for calling #{name} for type: #{type}") unless fn = _Utils[name]
-      fn.apply(fn, [pkg].concat(args.splice(2)))
-    catch err then return callback(err)
+module.exports = class Utils
+  @lookup: (pkg, name) ->
+    throw new Error "Package missing type for calling #{name}" unless type = pkg.get('type')
+    SpecializedUtils = cache[type] or= require "./#{type}"
+    throw new Error "Utils function not found for calling #{name} for type: #{type}" unless fn = SpecializedUtils[name]
+    fn.bind(fn, pkg)
 
   @root: (pkg) -> path.dirname(pkg.get('path'))
   @cwd: (pkg) -> {cwd: Utils.root(pkg)}

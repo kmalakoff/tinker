@@ -21,18 +21,10 @@ module.exports = class Module extends (require 'backbone').Model
     package: -> ['belongsTo', Package = require './package']
   sync: (require 'backbone-orm').sync(Module)
 
-  @load: (src, callback) ->
-    Vinyl.src(src)
-      .pipe jsonFileParse()
-      .pipe es.writeArray (err, files) ->
-        return callback(err) if err
-        package_queue = new Queue()
-        for file in files
-          do (file) -> package_queue.defer (callback) -> Module.createByFile(file, callback)
-        package_queue.await (err) -> callback(err, Array::splice.call(arguments, 1))
-
-  @createByFile: (file, callback) ->
-    new Module(_.extend({name: file.contents.name}, _.pick(file, 'cwd', 'path', 'contents'))).save(callback)
+  @findOrCreateByFile: (file, callback) ->
+    Module.findOrCreate _.pick(file, 'path'), (err, model) ->
+      return callback(err) if err
+      model.save({name: file.contents?.name, contents: file.contents}, callback)
 
   @findByGlob: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -134,7 +126,7 @@ module.exports = class Module extends (require 'backbone').Model
     @get 'package', (err, pkg) =>
       return callback(err) if err
       return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
-      PackageUtils.apply(pkg, 'installModule', @, callback)
+      PackageUtils.lookup(pkg, 'installModule')(@, callback)
 
   repositories: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -146,7 +138,7 @@ module.exports = class Module extends (require 'backbone').Model
       @get 'package', (err, pkg) =>
         return callback(err) if err
         return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
-        PackageUtils.apply pkg, 'repositories', @, (err, _repositories) =>
+        PackageUtils.lookup(pkg, 'repositories') @, (err, _repositories) =>
           return callback(err) if err
           repositories = repositories.concat(_repositories)
           callback()

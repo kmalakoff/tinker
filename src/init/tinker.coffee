@@ -45,8 +45,8 @@ class TinkerInit
     (answers) ->
       queue = new Queue(1)
       queue.defer (callback) -> Config.save(answers, callback)
-      queue.defer (callback) -> Utils.load(options, callback) # reload
       queue.defer (callback) -> Tinker.install(options, callback)
+      queue.defer (callback) -> Utils.load(options, callback) # reload
       queue.await callback
 
   @configureModules: (options, callback) ->

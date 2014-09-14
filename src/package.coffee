@@ -26,18 +26,17 @@ module.exports = class Package extends (require 'backbone').Model
     {type: 'bower', file_name: 'bower.json'}
   ]
 
-  @findOrCreateByFile: (file, callback) ->
-    Package.findOrCreate _.pick(file, 'path'), (err, model) ->
-      return callback(err) if err
-      file_name = path.basename(file.path)
-      info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
-      model.save({name: file.contents?.name, contents: file.contents, type: info.type}, callback)
+  @findOrCreateByFile: (require './lib/model_utils').findOrCreateByFileFn Package, (file) ->
+    file_name = path.basename(file.path)
+    info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
+    @set({name: file.contents?.name, contents: file.contents, type: info?.type})
 
   @optionsToTypes: (options) ->
     if _.size(_.pick(options, _.pluck(Package.TYPES, 'type')))
       return (type for type in Package.TYPES when not options.hasOwnProperty('type') or !!options[type])
     else
       package_types = Config.get('package_types')
+      console.log "Tinker has no package types configured. Have you run 'tinker init'?" unless package_types.length
       return _.filter(Package.TYPES, (type) -> type.type in package_types)
 
   @optionsToDirectories: (options) ->

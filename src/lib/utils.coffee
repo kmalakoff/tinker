@@ -2,7 +2,6 @@ _ = require 'underscore'
 Queue = require 'queue-async'
 Vinyl = require 'vinyl-fs'
 es = require 'event-stream'
-jsonFileParse = require './json_file_parse'
 
 Config = require '../config'
 Package = require '../package'
@@ -17,17 +16,14 @@ module.exports = class Utils
     queue.defer (callback) -> Package.destroy(callback)
     queue.defer (callback) -> Module.destroy(callback)
 
-    queue.defer (callback) ->
+    queue.await (err) ->
+      return callback(err) if err
       return callback() unless (src = Package.optionsToDirectories(options)).length
 
-      Vinyl.src(src)
-        .pipe jsonFileParse()
-        .pipe es.writeArray (err, files) ->
-          return callback(err) if err
+      Vinyl.src(src).pipe es.writeArray (err, files) ->
+        return callback(err) if err
 
-          package_queue = new Queue()
-          for file in files
-            do (file) -> queue.defer (callback) -> Package.findOrCreateByFile file, (err, pkg) ->
-              if err then callback(err) else pkg.loadModules(callback)
-          package_queue.await callback
-    queue.await callback
+        queue = new Queue()
+        for file in files
+          do (file) -> queue.defer (callback) -> Package.findOrCreateByFile file, (err, pkg) -> if err then callback(err) else pkg.loadModules(callback)
+        queue.await callback

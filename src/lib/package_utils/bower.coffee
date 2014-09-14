@@ -4,7 +4,6 @@ _ = require 'underscore'
 Queue = require 'queue-async'
 Vinyl = require 'vinyl-fs'
 es = require 'event-stream'
-jsonFileParse = require '../json_file_parse'
 request = require 'superagent'
 inquirer =  require 'inquirer'
 
@@ -17,7 +16,6 @@ BOWER_REGISTRY_URL = (new (require 'bower-config')()).load()._config.registry
 module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
     Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', 'bower.json'))
-      .pipe jsonFileParse()
       .pipe es.map (file, callback) ->
         Module.findOrCreateByFile file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)
       .pipe es.writeArray callback

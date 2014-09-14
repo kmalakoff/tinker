@@ -27,10 +27,8 @@ module.exports = class Module extends (require 'backbone').Model
     package: -> ['belongsTo', Package = require './package']
   sync: (require 'backbone-orm').sync(Module)
 
-  @findOrCreateByFile: (file, callback) ->
-    Module.findOrCreate _.pick(file, 'path'), (err, model) ->
-      return callback(err) if err
-      model.save({name: file.contents?.name, contents: file.contents}, callback)
+  @findOrCreateByFile: (require './lib/model_utils').findOrCreateByFileFn Module, (file) ->
+    @set({name: file.contents?.name, contents: file.contents})
 
   @findByGlob: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -51,7 +49,7 @@ module.exports = class Module extends (require 'backbone').Model
   toConfig: ->
     config = _.pick(@attributes, 'name', 'path', 'url')
     console.log "Module config is missing package #{@get('name')}".red unless pkg = @get('package')
-    config.package = pkg?.get('path')
+    config.package_path = pkg?.get('path')
     return config
 
   tinkerOn: (options, callback) ->

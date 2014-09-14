@@ -26,7 +26,7 @@ module.exports = class Package extends (require 'backbone').Model
     {type: 'bower', file_name: 'bower.json'}
   ]
 
-  @findOrCreateByFile: (require './lib/model_utils').findOrCreateByFileFn Package, (file) ->
+  @findOrCreate: (require './lib/model_utils').findOrCreateFn Package, (file) ->
     file_name = path.basename(file.path)
     info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
     @set({name: file.contents?.name, contents: file.contents, type: info?.type})

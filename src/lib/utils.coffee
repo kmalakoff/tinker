@@ -25,5 +25,5 @@ module.exports = class Utils
 
         queue = new Queue()
         for file in files
-          do (file) -> queue.defer (callback) -> Package.findOrCreateByFile file, (err, pkg) -> if err then callback(err) else pkg.loadModules(callback)
+          do (file) -> queue.defer (callback) -> Package.findOrCreate file, (err, pkg) -> if err then callback(err) else pkg.loadModules(callback)
         queue.await callback

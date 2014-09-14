@@ -17,7 +17,7 @@ module.exports = class Utils extends (require './index')
   @loadModules: (pkg, callback) ->
     Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', 'bower.json'))
       .pipe es.map (file, callback) ->
-        Module.findOrCreateByFile file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)
+        Module.findOrCreate file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)
       .pipe es.writeArray callback
 
   @install: (pkg, callback) -> spawn 'bower install --force-latest', Utils.cwd(pkg), callback

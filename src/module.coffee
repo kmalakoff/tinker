@@ -27,7 +27,7 @@ module.exports = class Module extends (require 'backbone').Model
     package: -> ['belongsTo', Package = require './package']
   sync: (require 'backbone-orm').sync(Module)
 
-  @findOrCreateByFile: (require './lib/model_utils').findOrCreateByFileFn Module, (file) ->
+  @findOrCreate: (require './lib/model_utils').findOrCreateFn Module, (file) ->
     @set({name: file.contents?.name, contents: file.contents})
 
   @findByGlob: (options, callback) ->

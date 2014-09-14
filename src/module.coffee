@@ -58,6 +58,7 @@ module.exports = class Module extends (require 'backbone').Model
     [options, callback] = [{}, options] if arguments.length is 1
     @ensureInitialized options, (initialized) =>
       return callback() unless url = (config = Config.configByModule(@))?.url
+      console.log '\n****************'
       console.log "Tinkering on #{@get('name')} (#{@relativeDirectory()})"
 
       @installStatus (status) =>
@@ -65,6 +66,7 @@ module.exports = class Module extends (require 'backbone').Model
           unless options.force
             console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
 
+          console.log ''
           inquirer.prompt [{
             type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Replace .git folder']
             message: "Module: #{@get('name')} .git exists in #{@relativeDirectory()}"}
@@ -80,6 +82,7 @@ module.exports = class Module extends (require 'backbone').Model
             queue.await callback
 
         else if status.directory
+          console.log ''
           inquirer.prompt [{
             type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install .git folder']
             message: "Module: #{@get('name')} exists in #{@relativeDirectory()}"}
@@ -101,6 +104,7 @@ module.exports = class Module extends (require 'backbone').Model
     [options, callback] = [{}, options] if arguments.length is 1
     @ensureInitialized options, (initialized) =>
       return callback() unless url = (config = Config.configByModule(@))?.url
+      console.log '\n****************'
       console.log "Tinkering off #{@get('name')} (#{@relativeDirectory()})"
 
       @installStatus (status) =>
@@ -111,6 +115,7 @@ module.exports = class Module extends (require 'backbone').Model
           unless options.force
             console.log "Module: #{@get('name')} folder exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
 
+          console.log ''
           inquirer.prompt [{
             type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
             message: "Module: #{@get('name')} folder exists in #{@relativeDirectory()}"}
@@ -129,6 +134,8 @@ module.exports = class Module extends (require 'backbone').Model
     [options, callback] = [{}, options] if arguments.length is 2
     @ensureInitialized options, (initialized) =>
       return callback() unless initialized
+      console.log '\n****************'
+      console.log "Exec #{args.join(' ')} on #{@get('name')} (#{@relativeDirectory()})"
       spawn args.join(' '), {cwd: @moduleDirectory()}, callback
 
   moduleDirectory: -> path.dirname(@get('path'))

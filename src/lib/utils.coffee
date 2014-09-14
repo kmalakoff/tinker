@@ -20,10 +20,6 @@ module.exports = class Utils
       return callback(err) if err
       return callback() unless (src = Package.optionsToDirectories(options)).length
 
-      Vinyl.src(src).pipe es.writeArray (err, files) ->
-        return callback(err) if err
-
-        queue = new Queue()
-        for file in files
-          do (file) -> queue.defer (callback) -> Package.findOrCreate file, (err, pkg) -> if err then callback(err) else pkg.loadModules(callback)
-        queue.await callback
+      Vinyl.src(src)
+        .pipe es.map(Package.findOrCreate)
+        .pipe es.writeArray(callback)

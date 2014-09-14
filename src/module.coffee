@@ -13,6 +13,7 @@ RepoURL = require './lib/repo_url'
 Package = null
 Config = require './config'
 moduleInit = require './init/module'
+fileToJSON = require './lib/file_to_json'
 spawn = require './lib/spawn'
 
 doInstall = (module, callback) ->
@@ -27,8 +28,9 @@ module.exports = class Module extends (require 'backbone').Model
     package: -> ['belongsTo', Package = require './package']
   sync: (require 'backbone-orm').sync(Module)
 
-  @findOrCreate: (require './lib/model_utils').findOrCreateFn Module, (file) ->
-    @set({name: file.contents?.name, contents: file.contents})
+  setFile: (file, callback) -> fileToJSON file, (err, json) => @save {path: file.path, name: json?.name, contents: json}, callback
+
+  @findOrCreate: (require './lib/model_utils').findOrCreateByFileOverloadFn Module, Module::setFile
 
   @findByGlob: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

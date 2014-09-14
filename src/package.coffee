@@ -8,12 +8,12 @@ inquirer = require 'inquirer'
 Queue = require 'queue-async'
 Module = null
 Config = require './config'
+fileToJSON = require './lib/file_to_json'
 
 PackageUtils = require './lib/package_utils'
 
 doInstall = (pkg, callback) ->
-  PackageUtils.lookup(pkg, 'install') (err) =>
-    if err then callback(err) else PackageUtils.lookup(pkg, 'loadModules')(callback)
+  PackageUtils.lookup(pkg, 'install') (err) => if err then callback(err) else pkg.loadModules(callback)
 
 module.exports = class Package extends (require 'backbone').Model
   model_name: 'Package'
@@ -26,10 +26,14 @@ module.exports = class Package extends (require 'backbone').Model
     {type: 'bower', file_name: 'bower.json'}
   ]
 
-  @findOrCreate: (require './lib/model_utils').findOrCreateFn Package, (file) ->
-    file_name = path.basename(file.path)
-    info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
-    @set({name: file.contents?.name, contents: file.contents, type: info?.type})
+  setFile: (file, callback) ->
+    fileToJSON file, (err, json) =>
+      file_name = path.basename(file.path); info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
+      @save {path: file.path, name: json?.name, contents: json, type: info?.type}, (err) =>
+        return callback(err) if err
+        @loadModules (err) => callback(err, @)
+
+  @findOrCreate: (require './lib/model_utils').findOrCreateByFileOverloadFn Package, Package::setFile
 
   @optionsToTypes: (options) ->
     if _.size(_.pick(options, _.pluck(Package.TYPES, 'type')))
@@ -55,14 +59,7 @@ module.exports = class Package extends (require 'backbone').Model
       do (module_info) => queue.defer (callback) =>
         Module.findOrCreate _.pick(module_info, 'name', 'path'), (err, module) =>
           return callback(err) if err
-          return callback(null, module) if module.get('content') and module.get('package') is @
-
-          unless module.get('content')
-            try
-              content = require(module_info.path)
-              module.set({content: content, name: content.name})
-
-          module.save({package: @}, callback)
+          module.set({package: @}).setFile(module_info.path, callback)
 
     queue.await callback
 
@@ -101,6 +98,4 @@ module.exports = class Package extends (require 'backbone').Model
 
   uninstall: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    Module.destroy {package_id: @id}, (err) =>
-      return callback(err) if err
-      PackageUtils.lookup(@, 'uninstall')(callback)
+    Module.destroy {package_id: @id}, (err) => if err then callback(err) else PackageUtils.lookup(@, 'uninstall')(callback)

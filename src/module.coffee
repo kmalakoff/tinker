@@ -62,7 +62,6 @@ module.exports = class Module extends (require 'backbone').Model
     (console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Skipping".yellow; return callback()) unless url = (config = Config.configByModule(@))?.url
 
     @installStatus (status) =>
-      console.log 'status', status
       if status.git
         unless options.force
           console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()

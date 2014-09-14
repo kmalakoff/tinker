@@ -16,7 +16,7 @@ module.exports = class Utils extends (require './index')
     Module.destroy {package_id: pkg.id}, (err) ->
       return callback(err) if err
 
-      Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', '.bower.json'))
+      Vinyl.src(path.join(Utils.modulesDirectory(pkg), '*', 'bower.json'))
         .pipe jsonFileParse()
         .pipe es.map (file, callback) ->
           Module.createByFile file, (err, module) -> if err then callback(err) else module.save({package: pkg}, callback)

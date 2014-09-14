@@ -59,7 +59,6 @@ module.exports = class Utils
 
     type.find {'path': {$in: src}}, (err, models) ->
       return callback(err) if err
-
       loaded_paths = (model.get('path') for model in models)
       return callback(null, models) unless (missing_paths = _.difference(src, loaded_paths)).length
 

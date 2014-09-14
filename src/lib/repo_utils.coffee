@@ -12,7 +12,7 @@ spawn = require './spawn'
 module.exports = class RepoUtils
   @cacheClear: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    fs.remove RepoUtils.cacheDirectory(), callback()
+    fs.remove RepoUtils.cacheDirectory(), callback
 
   @cacheDirectory: (url) ->
     if url
@@ -70,6 +70,7 @@ module.exports = class RepoUtils
       queue = new Queue(1)
       queue.defer (callback) => fs.exists cache_directory, (exists) =>
         if exists
+          console.log "Fetching lastest from #{url}"
           spawn 'git fetch --all', {cwd: cache_directory, silent: true}, callback
         else
           spawn "git clone #{url} #{cache_directory}", callback

@@ -40,18 +40,30 @@ module.exports = class Tinker
     Utils.load options, (err) ->
       return callback(err) if err
 
-      Package.cursor().include('modules').toModels (err, packages) ->
-        return callback(err) if err
-        Async.each packages, ((pkg, callback) -> pkg.install(options, callback)), callback
+      if options.glob is '*'
+        Package.cursor().include('modules').toModels (err, packages) ->
+          return callback(err) if err
+          Async.each packages, ((pkg, callback) -> pkg.install(options, callback)), callback
+      else
+        Module.findByGlob options, (err, modules) ->
+          return callback(err) if err
+          return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
+          Async.eachSeries modules, ((module, callback) -> module.install options, callback), callback
 
   @uninstall: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     Utils.load options, (err) ->
       return callback(err) if err
 
-      Package.cursor().include('modules').toModels (err, packages) ->
-        return callback(err) if err
-        Async.each packages, ((pkg, callback) -> pkg.uninstall(options, callback)), callback
+      if options.glob is '*'
+        Package.cursor().include('modules').toModels (err, packages) ->
+          return callback(err) if err
+          Async.each packages, ((pkg, callback) -> pkg.uninstall(options, callback)), callback
+      else
+        Module.findByGlob options, (err, modules) ->
+          return callback(err) if err
+          return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
+          Async.eachSeries modules, ((module, callback) -> module.uninstall options, callback), callback
 
   @on: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

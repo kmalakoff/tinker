@@ -79,7 +79,19 @@ module.exports = class Module extends (require 'backbone').Model
           queue.await callback
 
       else if status.directory
-        RepoUtils.cloneGit(url, @moduleDirectory(), callback)
+        inquirer.prompt [{
+          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install .git folder']
+          message: "Module: #{@get('name')} exists in #{@relativeDirectory()}"}
+        ], (answers) =>
+          queue = new Queue(1)
+          switch answers.action
+            when 'Discard my changes'
+              queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
+              queue.defer (callback) => RepoUtils.clone(url, @moduleDirectory(), callback)
+            when 'Install .git folder'
+              queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
+              queue.defer (callback) => RepoUtils.cloneGit(url, @moduleDirectory(), callback)
+          queue.await callback
 
       else
         RepoUtils.clone(url, @moduleDirectory(), callback)

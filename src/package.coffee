@@ -4,7 +4,7 @@ _ = require 'underscore'
 Queue = require 'queue-async'
 inquirer = require 'inquirer'
 
-{File} = require 'gulp-util'
+File = require 'vinyl'
 Queue = require 'queue-async'
 Module = null
 Config = require './config'

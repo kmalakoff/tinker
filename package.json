@@ -45,20 +45,15 @@
     "superagent": "*",
     "underscore": "*",
     "validator": "*",
-    "vinyl-fs": "*"
+    "vinyl-fs": "*",
+    "vinyl": "*"
   },
   "devDependencies": {
     "chai": "*",
     "codo": "2.x",
     "gulp": "*",
-    "gulp-coffee": "*",
-    "gulp-concat": "*",
-    "gulp-header": "*",
     "gulp-mocha": "*",
-    "gulp-rename": "*",
-    "gulp-uglify": "*",
     "gulp-util": "*",
-    "minimatch": "*",
     "mocha": "*"
   },
   "bin": {

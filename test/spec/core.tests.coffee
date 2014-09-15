@@ -4,6 +4,13 @@ Queue = require 'queue-async'
 describe 'tinker utils @quick @core', ->
   Tinker = require('../../src')
 
+  before (callback) ->
+    queue = new Queue(1)
+    queue.defer (callback) -> Tinker.Config.load {directory: 'test/data'}, callback
+    queue.defer (callback) -> Tinker.Config.clear().save(callback)
+    queue.defer (callback) -> Tinker.cacheClear {directory: 'test/data'}, callback
+    queue.await callback
+
   it 'configures', (callback) ->
     queue = new Queue(1)
     queue.defer (callback) ->
@@ -19,9 +26,6 @@ describe 'tinker utils @quick @core', ->
         callback()
     queue.await callback
 
-  it 'clears the cache', (callback) ->
-    Tinker.cacheClear {directory: 'test/data'}, callback
-
   it 'uninstalls', (callback) ->
     Tinker.uninstall {directory: 'test/data', force: true}, callback
 
@@ -33,3 +37,6 @@ describe 'tinker utils @quick @core', ->
 
   it 'off', (callback) ->
     Tinker.off {directory: 'test/data', glob: 'underscore', force: true}, callback
+
+  it 'on with git cache', (callback) ->
+    Tinker.on {directory: 'test/data', glob: 'underscore', force: true}, callback

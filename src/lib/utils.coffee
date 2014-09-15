@@ -1,3 +1,4 @@
+path = require 'path'
 _ = require 'underscore'
 Queue = require 'queue-async'
 Vinyl = require 'vinyl-fs'
@@ -26,4 +27,6 @@ module.exports = class Utils
         .pipe es.map(Package.findOrCreate)
         .pipe es.writeArray(callback)
 
-  @relativeDirectory: (path) -> base = path.substring(cwd.length+1) if path.indexOf(cwd = process.cwd()) is 0; base
+  @relativeDirectory: (full_path, options={}) ->
+    directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
+    if full_path.indexOf(directory) is 0 then full_path.substring(directory.length+1) else full_path

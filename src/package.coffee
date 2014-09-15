@@ -71,22 +71,23 @@ module.exports = class Package extends (require 'backbone').Model
     queue.await callback
 
   moduleDirectory: -> path.dirname(@get('path'))
-  relativeDirectory: -> TinkerUtils.relativeDirectory(@moduleDirectory())
+  relativeDirectory: (options) -> TinkerUtils.relativeDirectory(@moduleDirectory(), options)
+
   install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
     fs.exists (modules_directory = PackageUtils.lookup(@, 'modulesDirectory')()), (exists) =>
       if exists
         unless options.force
-          console.log "Package: #{@get('name')} already installed in #{@relativeDirectory() or 'cwd'}. Skipping. Use --force for replacement options.".yellow; return callback()
+          console.log "Package: #{@get('name')} already installed in #{@relativeDirectory(options) or 'cwd'}. Skipping. Use --force for replacement options.".yellow; return callback()
 
         console.log ''
         inquirer.prompt [{
-          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install modules one-by-one']
-          message: "Package: #{@get('name')} already installed in #{@relativeDirectory() or 'cwd'}"}
+          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes (clean install)', 'Install modules one-by-one']
+          message: "Package: #{@get('name')} already installed in #{@relativeDirectory(options) or 'cwd'}"}
         ], (answers) =>
           switch answers.action
-            when 'Discard my changes'
+            when 'Discard my changes (clean install)'
               @uninstall options, (err) => if err then callback(err) else doInstall(@, callback)
             when 'Install modules one-by-one'
               @get 'modules', (err, modules) =>
@@ -109,14 +110,16 @@ module.exports = class Package extends (require 'backbone').Model
 
   canModify: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    Vinyl.src(path.join(PackageUtils.lookup(@, 'modulesDirectory')(), '*', '.git'))
+    Vinyl.src(path.join(PackageUtils.lookup(@, 'modulesDirectory')(), '**', '.git'), {read: false})
       .pipe es.writeArray (err, files) =>
         return callback(err) if err
         return callback(null, true) unless files.length
-        module_names = (file.path.split(path.sep).splice(-2, 1)[0] for file in files)
+
+        module_names = (TinkerUtils.relativeDirectory(path.dirname(file.path), options) for file in files).join(' and ')
         unless options.force
           console.log "Modules #{module_names} have .git files for package #{@get('name')}. Skipping. Use --force for replacement options.".yellow
           callback(null, false)
 
-        inquirer.prompt [{type: 'confirm', name: 'allow', message: "Modules #{module_names} have .git files for package #{@get('name')}. Do you want to discard your changes?"}
+        console.log ''
+        inquirer.prompt [{type: 'confirm', name: 'allow', message: "Modules #{module_names} have .git files for package #{@get('name')}. Do you want to remove all files?"}
         ], (answers) -> return callback(null, answers.allow)

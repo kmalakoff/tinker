@@ -71,28 +71,55 @@ module.exports = class Module extends (require 'backbone').Model
     config.package_path = pkg?.get('path')
     return config
 
+  install: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+
+    fs.exists module_directory = @moduleDirectory(), (exists) =>
+      if exists
+        unless options.force
+          console.log "Module: #{@get('name')} already installed in #{@relativeDirectory(options)}. Skipping. Use --force for replacement options.".yellow; return callback()
+
+        console.log ''
+        inquirer.prompt [{
+          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes (clean install)']
+          message: "Module: #{@get('name')} already installed in #{@relativeDirectory(options)}"}
+        ], (answers) =>
+          switch answers.action
+            when 'Discard my changes (clean install)'
+              fs.remove @moduleDirectory(), (err) => if err then callback(err) else doInstall(@, callback)
+            else callback()
+      else
+        doInstall(@, callback)
+
+  uninstall: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    @canUninstall options, (err, can_modify) =>
+      return callback(err) if err
+      return callback(new Error "Cannot modify install #{@get('name')}") unless can_modify
+      fs.remove(@moduleDirectory(), callback)
+
   tinkerOn: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
     @ensureInitialized options, (initialized) =>
       return callback() unless url = (config = Config.configByModule(@))?.url
       console.log '\n****************'
-      console.log "Tinkering on #{@get('name')} (#{@relativeDirectory()})"
+      console.log "Tinkering on #{@get('name')} (#{@relativeDirectory(options)})"
 
       @installStatus (status) =>
         if status.git
           unless options.force
-            console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
+            console.log "Module: #{@get('name')} .git exists in #{@relativeDirectory(options)}. Skipping. Use --force for replacement options.".yellow; return callback()
 
           console.log ''
           inquirer.prompt [{
-            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Replace .git folder']
-            message: "Module: #{@get('name')} .git exists in #{@relativeDirectory()}"}
+            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes (git clone)', 'Update git (copy .git folder)']
+            message: "Module: #{@get('name')} .git exists in #{@relativeDirectory(options)}"}
           ], (answers) =>
             switch answers.action
-              when 'Discard my changes'
+              when 'Discard my changes (git clone)'
                 fs.remove @moduleDirectory(), (err) =>
                   if err then callback(err) else RepoUtils.clone(url, @moduleDirectory(), callback)
-              when 'Replace .git folder'
+              when 'Update git (copy .git folder)'
                 fs.remove path.join(@moduleDirectory(), '.git'), (err) =>
                   if err then callback(err) else RepoUtils.cloneGit(url, @moduleDirectory(), callback)
               else callback()
@@ -100,14 +127,14 @@ module.exports = class Module extends (require 'backbone').Model
         else if status.directory
           console.log ''
           inquirer.prompt [{
-            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install .git folder']
-            message: "Module: #{@get('name')} exists in #{@relativeDirectory()}"}
+            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes (git clone)', 'Keep my changes (copy .git folder)']
+            message: "Module: #{@get('name')} exists in #{@relativeDirectory(options)}"}
           ], (answers) =>
             switch answers.action
-              when 'Discard my changes'
+              when 'Discard my changes (git clone)'
                 fs.remove @moduleDirectory(), (err) =>
                   if err then callback(err) else RepoUtils.clone(url, @moduleDirectory(), callback)
-              when 'Install .git folder'
+              when 'Keep my changes (copy .git folder)'
                 fs.remove path.join(@moduleDirectory(), '.git'), (err) =>
                   if err then callback(err) else RepoUtils.cloneGit(url, @moduleDirectory(), callback)
               else callback()
@@ -120,7 +147,7 @@ module.exports = class Module extends (require 'backbone').Model
     @ensureInitialized options, (initialized) =>
       return callback() unless url = (config = Config.configByModule(@))?.url
       console.log '\n****************'
-      console.log "Tinkering off #{@get('name')} (#{@relativeDirectory()})"
+      console.log "Tinkering off #{@get('name')} (#{@relativeDirectory(options)})"
 
       @installStatus (status) =>
         if status.git
@@ -128,15 +155,15 @@ module.exports = class Module extends (require 'backbone').Model
 
         else if status.directory
           unless options.force
-            console.log "Module: #{@get('name')} folder exists in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
+            console.log "Module: #{@get('name')} folder exists in #{@relativeDirectory(options)}. Skipping. Use --force for replacement options.".yellow; return callback()
 
           console.log ''
           inquirer.prompt [{
-            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
-            message: "Module: #{@get('name')} folder exists in #{@relativeDirectory()}"}
+            type: 'list', name: 'action', choices: ['Skip', 'Discard my changes (fresh install)']
+            message: "Module: #{@get('name')} folder exists in #{@relativeDirectory(options)}"}
           ], (answers) =>
             switch answers.action
-              when 'Discard my changes'
+              when 'Discard my changes (fresh install)'
                 fs.remove @moduleDirectory(), (err) =>
                   if err then callback(err) else @install(callback)
               else callback()
@@ -149,7 +176,7 @@ module.exports = class Module extends (require 'backbone').Model
     @ensureInitialized options, (initialized) =>
       return callback() unless initialized
       console.log '\n****************'
-      console.log "Exec #{args.join(' ')} on #{@get('name')} (#{@relativeDirectory()})"
+      console.log "Exec #{args.join(' ')} on #{@get('name')} (#{@relativeDirectory(options)})"
       commands = args.join(' ').split(';')
       queue = new Queue(1)
       for command in commands
@@ -157,39 +184,13 @@ module.exports = class Module extends (require 'backbone').Model
       queue.await callback
 
   moduleDirectory: -> path.dirname(@get('path'))
-  relativeDirectory: -> TinkerUtils.relativeDirectory(@moduleDirectory())
+  relativeDirectory: (options) -> TinkerUtils.relativeDirectory(@moduleDirectory(), options)
 
   installStatus: (callback) ->
     queue = new Queue()
     queue.defer (callback) => fs.exists path.join(@moduleDirectory(), '.git'), (exists) => callback(null, {git: exists})
     queue.defer (callback) => fs.exists @moduleDirectory(), (exists) => callback(null, {directory: exists})
     queue.await => callback(_.extend.apply(_, Array::slice.call(arguments, 1)))
-
-  install: (options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 1
-
-    fs.exists module_directory = @moduleDirectory(), (exists) =>
-      if exists
-        unless options.force
-          console.log "Module: #{@get('name')} already installed in #{@relativeDirectory()}. Skipping. Use --force for replacement options.".yellow; return callback()
-
-        inquirer.prompt [{
-          type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
-          message: "Module: #{@get('name')} already installed in #{@relativeDirectory()}"}
-        ], (answers) =>
-          switch answers.action
-            when 'Discard my changes'
-              fs.remove @moduleDirectory(), (err) => if err then callback(err) else doInstall(@, callback)
-            else callback()
-      else
-        doInstall(@, callback)
-
-  uninstall: (options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 1
-    @canUninstall options, (err, can_modify) =>
-      return callback(err) if err
-      return callback(new Error "Cannot modify install #{@get('name')}") unless can_modify
-      fs.remove(@moduleDirectory(), callback)
 
   repositories: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -215,7 +216,7 @@ module.exports = class Module extends (require 'backbone').Model
     [options, callback] = [{}, options] if arguments.length is 1
     return callback(!!url) if url = (config = Config.configByModule(@))?.url
     @init options, (err) =>
-      console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Do you need to initialize it?".yellow unless url = (config = Config.configByModule(@))?.url
+      console.log "Module: #{@get('name')} has no url #{@relativeDirectory(options)}. Do you need to initialize it?".yellow unless url = (config = Config.configByModule(@))?.url
       callback(!!url)
 
   canUninstall: (options, callback) ->
@@ -227,5 +228,6 @@ module.exports = class Module extends (require 'backbone').Model
         console.log "Module #{@get('name')} has .git files. Skipping. Use --force for replacement options.".yellow
         callback(null, false)
 
+      console.log ''
       inquirer.prompt [{type: 'confirm', name: 'allow', message: "Module #{@get('name')} has .git files. Do you want to discard your changes?"}
       ], (answers) -> return callback(null, answers.allow)

@@ -27,7 +27,7 @@ class ModuleInit
         {
           type: 'list',
           name: 'url',
-          message: "Which repository url do you want to use for #{module.get('name')} (#{module.relativeDirectory()})?"
+          message: "Which repository url do you want to use for #{module.get('name')} (#{module.relativeDirectory(options)})?"
           choices: repositories.concat(['Skip', 'Other'])
         }
       ], (answers) ->

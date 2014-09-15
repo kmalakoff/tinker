@@ -3,6 +3,7 @@ path = require 'path'
 _ = require 'underscore'
 request = require 'superagent'
 Queue = require 'queue-async'
+Async = require 'async'
 minimatch = require 'minimatch'
 inquirer = require 'inquirer'
 require 'colors'
@@ -23,6 +24,12 @@ doInstall = (module, callback) ->
     return callback(err) if err
     return callback(new Error "Couldn't find package for #{@get('name')}") unless pkg
     PackageUtils.lookup(pkg, 'installModule')(module, callback)
+
+doEachByGlob = (name, options, fn, callback) ->
+  Module.findByGlob options, (err, modules) ->
+    return callback(err) if err
+    return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
+    Async[name].call(Async, modules, fn, callback)
 
 module.exports = class Module extends (require 'backbone').Model
   model_name: 'Module'
@@ -50,6 +57,9 @@ module.exports = class Module extends (require 'backbone').Model
         callback(null, (module for module in modules when minimatch(module.get('path'), glob)))
       else
         callback(null, (module for module in modules when minimatch(module.get('name'), glob)))
+
+  @eachByGlob: (options, fn, callback) -> doEachByGlob 'each', options, fn, callback
+  @eachSeriesByGlob: (options, fn, callback) -> doEachByGlob 'eachSeries', options, fn, callback
 
   init: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1

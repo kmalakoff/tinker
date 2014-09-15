@@ -59,6 +59,6 @@ class TinkerInit
 
   @configureModules: (options, callback) ->
     options = Config.optionsSetPackageTypes(options)
-    Module.eachSeriesByGlob options, ((module, callback) -> module.init options, callback), callback
+    Module.eachSeriesByGlob options, ((module, callback) -> module.init options, callback), -> callback()
 
 module.exports = TinkerInit.init

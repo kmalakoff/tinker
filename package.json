@@ -1,6 +1,6 @@
 {
   "name": "tinker",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Tinker with your bower and node modules!",
   "main": "tinker.js",
   "author": {

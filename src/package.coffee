@@ -46,12 +46,12 @@ module.exports = class Package extends (require 'backbone').Model
       return (type for type in Package.TYPES when not options.hasOwnProperty('type') or !!options[type])
     else
       package_types = Config.get('package_types')
-      console.log "Tinker has no package types configured. Have you run 'tinker init'?" unless package_types.length
       return _.filter(Package.TYPES, (type) -> type.type in package_types)
 
   @optionsToDirectories: (options) ->
     directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()
-    (path.join(directory, info.file_name) for info in Package.optionsToTypes(options))
+    directories = (path.join(directory, info.file_name) for info in Package.optionsToTypes(options))
+    return directories
 
   loadModules: (callback) ->
     queue = new Queue(1)

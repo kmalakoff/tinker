@@ -58,7 +58,6 @@ class TinkerInit
     (answers) -> Config.save(answers, callback)
 
   @configureModules: (options, callback) ->
-    console.log 'configure'
     options = Config.optionsSetPackageTypes(options)
     Module.eachSeriesByGlob options, ((module, callback) -> module.init options, callback), callback
 

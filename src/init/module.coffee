@@ -4,6 +4,7 @@ inquirer = require 'inquirer'
 Config = require '../config'
 PackageUtils = require '../lib/package_utils'
 RepoUtils = require '../lib/repo_utils'
+RepoURL = require '../lib/repo_url'
 
 TEMPLATES =
   introduction: """
@@ -14,7 +15,6 @@ TEMPLATES =
 class ModuleInit
   @init: (module, options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 2
-    return callback() if not options.force and Config.configByModule(module)
 
     console.log _.template(TEMPLATES.introduction)(module)
     ModuleInit.selectRepository(module, options, callback)

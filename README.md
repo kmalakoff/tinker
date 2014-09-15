@@ -26,7 +26,7 @@ $ npm install tinker -g
 project$ tinker init
 ```
 
-3. Start tinkering!
+3. Start tinkering! (copy .git folder or git clone)
 
 ```
 project$ tinker on module_name
@@ -43,7 +43,7 @@ project$ tinker module_name git status
 project$ tinker module_name gulp test; gulp watch
 ```
 
-5. Stop tinkering
+5. Stop tinkering! (remove .git folder or clean install)
 
 ```
 project$ tinker off module_name

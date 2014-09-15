@@ -9,10 +9,12 @@ require 'colors'
 
 PackageUtils = require './lib/package_utils'
 RepoUtils = require './lib/repo_utils'
+TinkerUtils = require './lib/utils'
 RepoURL = require './lib/repo_url'
 Package = null
 Config = require './config'
 moduleInit = require './init/module'
+{File} = require 'gulp-util'
 fileToJSON = require './lib/file_to_json'
 spawn = require './lib/spawn'
 
@@ -28,7 +30,12 @@ module.exports = class Module extends (require 'backbone').Model
     package: -> ['belongsTo', Package = require './package']
   sync: (require 'backbone-orm').sync(Module)
 
-  setFile: (file, callback) -> fileToJSON file, (err, json) => @save {path: file.path, name: json?.name, contents: json}, callback
+  setFile: (file, callback) ->
+    fileToJSON file, (err, json) =>
+      new_attributes = {path: file.path or file}
+      _.extend(new_attributes, {name: json.name, contents: json}) if json
+      return callback(null, @) if _.isEqual(_.pick(@attributes, _.keys(new_attributes)), new_attributes) # no change
+      @save new_attributes, callback
 
   @findOrCreate: (require './lib/model_utils').findOrCreateByFileOverloadFn Module, Module::setFile
 
@@ -71,15 +78,14 @@ module.exports = class Module extends (require 'backbone').Model
             type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Replace .git folder']
             message: "Module: #{@get('name')} .git exists in #{@relativeDirectory()}"}
           ], (answers) =>
-            queue = new Queue(1)
             switch answers.action
               when 'Discard my changes'
-                queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
-                queue.defer (callback) => RepoUtils.clone(url, @moduleDirectory(), callback)
+                fs.remove @moduleDirectory(), (err) =>
+                  if err then callback(err) else RepoUtils.clone(url, @moduleDirectory(), callback)
               when 'Replace .git folder'
-                queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
-                queue.defer (callback) => RepoUtils.cloneGit(url, @moduleDirectory(), callback)
-            queue.await callback
+                fs.remove path.join(@moduleDirectory(), '.git'), (err) =>
+                  if err then callback(err) else RepoUtils.cloneGit(url, @moduleDirectory(), callback)
+              else callback()
 
         else if status.directory
           console.log ''
@@ -87,15 +93,14 @@ module.exports = class Module extends (require 'backbone').Model
             type: 'list', name: 'action', choices: ['Skip', 'Discard my changes', 'Install .git folder']
             message: "Module: #{@get('name')} exists in #{@relativeDirectory()}"}
           ], (answers) =>
-            queue = new Queue(1)
             switch answers.action
               when 'Discard my changes'
-                queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
-                queue.defer (callback) => RepoUtils.clone(url, @moduleDirectory(), callback)
+                fs.remove @moduleDirectory(), (err) =>
+                  if err then callback(err) else RepoUtils.clone(url, @moduleDirectory(), callback)
               when 'Install .git folder'
-                queue.defer (callback) => fs.remove(path.join(@moduleDirectory(), '.git'), callback)
-                queue.defer (callback) => RepoUtils.cloneGit(url, @moduleDirectory(), callback)
-            queue.await callback
+                fs.remove path.join(@moduleDirectory(), '.git'), (err) =>
+                  if err then callback(err) else RepoUtils.cloneGit(url, @moduleDirectory(), callback)
+              else callback()
 
         else
           RepoUtils.clone(url, @moduleDirectory(), callback)
@@ -120,12 +125,11 @@ module.exports = class Module extends (require 'backbone').Model
             type: 'list', name: 'action', choices: ['Skip', 'Discard my changes']
             message: "Module: #{@get('name')} folder exists in #{@relativeDirectory()}"}
           ], (answers) =>
-            queue = new Queue(1)
             switch answers.action
               when 'Discard my changes'
-                queue.defer (callback) => fs.remove(@moduleDirectory(), callback)
-                queue.defer (callback) => @install(callback)
-            queue.await callback
+                fs.remove @moduleDirectory(), (err) =>
+                  if err then callback(err) else @install(callback)
+              else callback()
 
         else
           @install(callback)
@@ -143,7 +147,7 @@ module.exports = class Module extends (require 'backbone').Model
       queue.await callback
 
   moduleDirectory: -> path.dirname(@get('path'))
-  relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = process.cwd()) is 0; base
+  relativeDirectory: -> TinkerUtils.relativeDirectory(@moduleDirectory())
 
   installStatus: (callback) ->
     queue = new Queue()
@@ -165,17 +169,17 @@ module.exports = class Module extends (require 'backbone').Model
         ], (answers) =>
           switch answers.action
             when 'Discard my changes'
-              queue = new Queue(1)
-              queue.defer (callback) => @uninstall(callback)
-              queue.defer (callback) => doInstall(@, callback)
-              queue.await callback
+              fs.remove @moduleDirectory(), (err) => if err then callback(err) else doInstall(@, callback)
             else callback()
       else
         doInstall(@, callback)
 
   uninstall: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    fs.remove(path.dirname(@get('path')), callback)
+    @canUninstall options, (err, can_modify) =>
+      return callback(err) if err
+      return callback(new Error "Cannot modify install #{@get('name')}") unless can_modify
+      fs.remove(@moduleDirectory(), callback)
 
   repositories: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -193,9 +197,7 @@ module.exports = class Module extends (require 'backbone').Model
 
     for repository_service in (Config.get('repository_services') or [])
       do (repository_service) => queue.defer (callback) =>
-        request.head(url = "#{repository_service}/#{@get('name')}").end (res) =>
-          repositories.push(url) if res.status is 200
-          callback()
+        request.head(url = "#{repository_service}/#{@get('name')}").end (res) => repositories.push(url) if res.status is 200; callback()
 
     queue.await (err) => callback(err, _.uniq(RepoURL.normalize(repository) for repository in repositories).sort())
 
@@ -205,3 +207,15 @@ module.exports = class Module extends (require 'backbone').Model
     @init options, (err) =>
       console.log "Module: #{@get('name')} has no url #{@relativeDirectory()}. Do you need to initialize it?".yellow unless url = (config = Config.configByModule(@))?.url
       callback(!!url)
+
+  canUninstall: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    fs.exists path.join(@moduleDirectory(), '.git'), (exists) =>
+      return callback(null, true) unless exists
+
+      unless options.force
+        console.log "Module #{@get('name')} has .git files. Skipping. Use --force for replacement options.".yellow
+        callback(null, false)
+
+      inquirer.prompt [{type: 'confirm', name: 'allow', message: "Module #{@get('name')} has .git files. Do you want to discard your changes?"}
+      ], (answers) -> return callback(null, answers.allow)

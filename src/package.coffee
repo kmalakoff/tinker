@@ -4,12 +4,15 @@ _ = require 'underscore'
 Queue = require 'queue-async'
 inquirer = require 'inquirer'
 
+Vinyl = require 'vinyl-fs'
 {File} = require 'gulp-util'
+es = require 'event-stream'
 Queue = require 'queue-async'
 Module = null
 Config = require './config'
 fileToJSON = require './lib/file_to_json'
 
+TinkerUtils = require './lib/utils'
 PackageUtils = require './lib/package_utils'
 
 doInstall = (pkg, callback) ->
@@ -28,10 +31,13 @@ module.exports = class Package extends (require 'backbone').Model
 
   setFile: (file, callback) ->
     fileToJSON file, (err, json) =>
-      file_name = path.basename(file.path); info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
-      @save {path: file.path, name: json?.name, contents: json, type: info?.type}, (err) =>
-        return callback(err) if err
-        @loadModules (err) => callback(err, @)
+      file_path = file.path or file
+      new_attributes = {path: file.path or file}
+      file_name = path.basename(file_path); info = _.find(Package.TYPES, (info) -> info.file_name is file_name)
+      new_attributes = {path: file_path, type: info.type}
+      _.extend(new_attributes, {name: json.name, contents: json}) if json
+      return callback(null, @) if _.isEqual(_.pick(@attributes, _.keys(new_attributes)), new_attributes) # no change
+      @save new_attributes, (err) => if err then callback(err) else @loadModules((err) => callback(err, @))
 
   @findOrCreate: (require './lib/model_utils').findOrCreateByFileOverloadFn Package, Package::setFile
 
@@ -55,16 +61,17 @@ module.exports = class Package extends (require 'backbone').Model
     queue.defer (callback) => PackageUtils.lookup(@, 'loadModules')(callback)
 
     # load modules from config
-    for module_info in _.filter(Config.get('modules') or [], (module) => module.package is @get('path'))
+    for module_info in _.filter(Config.get('modules') or [], (module) => module.package_path is @get('path'))
       do (module_info) => queue.defer (callback) =>
         Module.findOrCreate _.pick(module_info, 'name', 'path'), (err, module) =>
           return callback(err) if err
-          module.set({package: @}).setFile(module_info.path, callback)
+          module.save {package: @}, (err) =>
+            if err then callback(err) else module.setFile(module_info.path, callback)
 
     queue.await callback
 
   moduleDirectory: -> path.dirname(@get('path'))
-  relativeDirectory: -> base = base.substring(cwd.length+1) if (base = @moduleDirectory()).indexOf(cwd = process.cwd()) is 0; base
+  relativeDirectory: -> TinkerUtils.relativeDirectory(@moduleDirectory())
   install: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
 
@@ -80,10 +87,7 @@ module.exports = class Package extends (require 'backbone').Model
         ], (answers) =>
           switch answers.action
             when 'Discard my changes'
-              queue = new Queue(1)
-              queue.defer (callback) => @uninstall(callback)
-              queue.defer (callback) => doInstall(@, callback)
-              queue.await callback
+              @uninstall options, (err) => if err then callback(err) else doInstall(@, callback)
             when 'Install modules one-by-one'
               @get 'modules', (err, modules) =>
                 return callback(err) if err
@@ -98,4 +102,21 @@ module.exports = class Package extends (require 'backbone').Model
 
   uninstall: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
-    Module.destroy {package_id: @id}, (err) => if err then callback(err) else PackageUtils.lookup(@, 'uninstall')(callback)
+    @canModify options, (err, can_modify) =>
+      return callback(err) if err
+      return callback(new Error "Cannot modify install #{@get('name')}") unless can_modify
+      Module.destroy {package_id: @id}, (err) => if err then callback(err) else PackageUtils.lookup(@, 'uninstall')(callback)
+
+  canModify: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    Vinyl.src(path.join(PackageUtils.lookup(@, 'modulesDirectory')(), '*', '.git'))
+      .pipe es.writeArray (err, files) =>
+        return callback(err) if err
+        return callback(null, true) unless files.length
+        module_names = (file.path.split(path.sep).splice(-2, 1)[0] for file in files)
+        unless options.force
+          console.log "Modules #{module_names} have .git files for package #{@get('name')}. Skipping. Use --force for replacement options.".yellow
+          callback(null, false)
+
+        inquirer.prompt [{type: 'confirm', name: 'allow', message: "Modules #{module_names} have .git files for package #{@get('name')}. Do you want to discard your changes?"}
+        ], (answers) -> return callback(null, answers.allow)

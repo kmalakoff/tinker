@@ -3,12 +3,14 @@ Queue = require 'queue-async'
 Vinyl = require 'vinyl-fs'
 es = require 'event-stream'
 
-Config = require '../config'
-Package = require '../package'
-Module = require '../module'
+Config = Package = Module = null
 
 module.exports = class Utils
   @load: (options, callback) ->
+    Config or= require '../config'
+    Package or= require '../package'
+    Module or= require '../module'
+
     [options, callback] = [{}, options] if arguments.length is 1
 
     queue = new Queue(1)
@@ -23,3 +25,5 @@ module.exports = class Utils
       Vinyl.src(src)
         .pipe es.map(Package.findOrCreate)
         .pipe es.writeArray(callback)
+
+  @relativeDirectory: (path) -> base = path.substring(cwd.length+1) if path.indexOf(cwd = process.cwd()) is 0; base

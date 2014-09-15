@@ -5,9 +5,7 @@ _ = require 'underscore'
 module.exports = class ModelUtils
   @findOrCreateByFileOverloadFn: (type, setFile) ->
     __findOrCreate = type.findOrCreate
-    return fn = (info, callback) ->
-      info = new File({file: info, contents: fs.createReadStream(info)}) if _.isString(info) and (arguments.length is 2) # a path
-      return __findOrCreate.apply(type, arguments) unless info.pipe
-
-      __findOrCreate.call type, _.pick((file = info), 'path'), (err, model) ->
-        if err then callback(err) else setFile.call(model, file, callback)
+    return (info, callback) ->
+      return __findOrCreate.apply(type, arguments) if not (info.pipe or _.isString(info) and (arguments.length is 2))
+      __findOrCreate.call type, {path: info.path or info}, (err, model) ->
+        if err then callback(err) else setFile.call(model, info, callback)

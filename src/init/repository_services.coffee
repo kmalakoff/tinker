@@ -25,9 +25,7 @@ class RepositoryServicesInit
   @enterRepositoryService: (options, initial_repository_services, callback) ->
     inquirer.prompt [
      {
-        type: 'input',
-        name: 'url',
-        message: 'Enter a repository service (leave empy to skip)',
+        type: 'input',name: 'url', message: 'Enter a repository service (leave empy to skip)',
         validate: (value) ->
           return true if !value or (value.toLowerCase() is 'skip') or validator.isURL(value)
           'Please enter a valid repository service url'

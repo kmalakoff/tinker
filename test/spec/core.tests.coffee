@@ -1,11 +1,17 @@
 assert = assert or require?('chai').assert
+fs = require 'fs-extra'
+path = require 'path'
 Queue = require 'queue-async'
+
+MODULE_DIRECTORIES = ['node_modules', 'bower_components']
 
 describe 'tinker utils @quick @core', ->
   Tinker = require('../../src')
 
   before (callback) ->
     queue = new Queue(1)
+    for directory in MODULE_DIRECTORIES
+      do (directory) -> queue.defer (callback) -> fs.remove path.join(__dirname, '..', 'data', directory), -> callback()
     queue.defer (callback) -> Tinker.Config.load {directory: 'test/data'}, callback
     queue.defer (callback) -> Tinker.Config.clear().save(callback)
     queue.defer (callback) -> Tinker.cacheClear {directory: 'test/data'}, callback
@@ -26,8 +32,8 @@ describe 'tinker utils @quick @core', ->
         callback()
     queue.await callback
 
-  it 'uninstalls', (callback) ->
-    Tinker.uninstall {directory: 'test/data', force: true}, callback
+  it 'initializes', (callback) ->
+    Tinker.init {directory: 'test/data', force: true}, callback
 
   it 'installs', (callback) ->
     Tinker.install {directory: 'test/data', force: true}, callback

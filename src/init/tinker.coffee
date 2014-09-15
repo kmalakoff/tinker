@@ -6,7 +6,7 @@ inquirer = require 'inquirer'
 Config = require '../config'
 Package = require '../package'
 Module = require '../module'
-Utils = require '../lib/utils'
+TinkerUtils = require '../lib/utils'
 
 TEMPLATES =
   introduction: """
@@ -39,7 +39,7 @@ class TinkerInit
         Package.cursor().include('modules').toModels (err, packages) ->
           return callback(err) if err
           Async.eachSeries packages, ((pkg, callback) -> pkg.install(options, callback)), callback
-    queue.defer (callback) -> Utils.load(options, callback) # reload
+    queue.defer (callback) -> TinkerUtils.load(options, callback) # reload
     queue.defer (callback) -> TinkerInit.configureModules(options, callback)
     queue.await callback
 
@@ -58,9 +58,8 @@ class TinkerInit
     (answers) -> Config.save(answers, callback)
 
   @configureModules: (options, callback) ->
-    Module.findByGlob (options = Config.optionsSetPackageTypes(options)), (err, modules) ->
-      return callback(err) if err
-      return callback(new Error "No modules found for glob #{options.glob}") if modules.length is 0
-      Async.eachSeries modules, ((module, callback) -> module.init options, callback), callback
+    console.log 'configure'
+    options = Config.optionsSetPackageTypes(options)
+    Module.eachSeriesByGlob options, ((module, callback) -> module.init options, callback), callback
 
 module.exports = TinkerInit.init

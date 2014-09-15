@@ -11,16 +11,20 @@ tinkerInit = require './init/tinker'
 loadAndRun = (args, count, fn) ->
   [count, fn] = [2, count] if arguments.length is 2
   args = Array::slice.call(args, 0)
-  args.splice(args.length-2, 1, {}) while args.length < count
-  [options, callback] = args.slice(-2)
+  args.splice(args.length-2, 0, {}) while args.length < count
+  [options, callback] = args.slice(-2); args[args.length-2] = _.extend({glob: '*'}, options)
   TinkerUtils.load options, (err) -> if err then callback(err) else fn.apply(Tinker, args)
 
 module.exports = class Tinker
+  @Config: Config
+
   @init: (options, callback) -> loadAndRun arguments, (options, callback) ->
     tinkerInit(options, callback)
 
-  @config: (args, options, callback) -> loadAndRun arguments, 3, (args, options, callback) ->
-    if args.length then Config.save(Config.parseArgs(args), callback) else console.log Config.toJSON()
+  @configure: (args, options, callback) ->
+    loadAndRun arguments, 3, (args, options, callback) ->
+      args = Config.parseArgs(args) if _.isArray(args)
+      if _.size(args) then Config.save(args, callback) else (console.log Config.toJSON(); callback())
 
   @update: (options, callback) ->
     [options, callback] = [{}, options] if arguments.length is 1
@@ -48,9 +52,6 @@ module.exports = class Tinker
   @exec: (args, options, callback) -> loadAndRun arguments, 3, (args, options, callback) ->
     Module.eachSeriesByGlob options, ((module, callback) -> module.exec args, options, callback), callback
 
-  @cache: (action, options, callback) ->
-    [options, callback] = [{}, options] if arguments.length is 2
-
-    switch action
-      when 'clear', 'clean' then return RepoUtils.cacheClear(options, callback)
-      else return callback(new Error "Unrecognized cache action '#{action}'")
+  @cacheClear: (options, callback) ->
+    [options, callback] = [{}, options] if arguments.length is 1
+    RepoUtils.cacheClear(options, callback)

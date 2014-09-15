@@ -32,14 +32,14 @@ program
       process.exit(0)
 
 program
-  .command('config *')
+  .command('configure *')
   .description('Configure tinker')
   .defaultOptions()
   .action ->
     args = Array::splice.call(arguments, 0); args.pop()
     options = CommanderUtils.extractCommandOptions(program)
-    (require '../src').config args, options, (err) ->
-      message = "tinker config #{args.join(' ')} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+    (require '../src').configure args, options, (err) ->
+      message = "tinker configure #{args.join(' ')} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
       if err then console.log(message.red) else console.log(message.green)
       process.exit(0)
 
@@ -103,10 +103,14 @@ program
   .description('Performs an action on the cache')
   .action (action)->
     options = CommanderUtils.extractCommandOptions(program)
-    (require '../src').cache action, options, (err) ->
-      message = "tinker cache #{action} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
-      if err then console.log(message.red) else console.log(message.green)
-      process.exit(0)
+
+    switch action
+      when 'clear', 'clean' then (require '../src').cacheClear options, (err) ->
+        message = "tinker cache #{action} #{if err then ('failed. ' + err.toString()) else 'succeeded'}"
+        if err then console.log(message.red) else console.log(message.green)
+        process.exit(0)
+
+      else console.log("Unrecognized cache action '#{action}'".red)
 
 program
   .command('exec *')

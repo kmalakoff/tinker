@@ -9,8 +9,8 @@ testNode = (callback) ->
 
   gutil.log "Running Node.js tests #{tags}"
   gulp.src('test/spec/**/*.tests.coffee')
-    .pipe(mocha({reporter: 'dot', grep: tags}))
+    .pipe(mocha({reporter: 'dot', grep: tags, timeout: 20000}))
     .pipe es.writeArray callback
   return # promises workaround: https://github.com/gulpjs/gulp/issues/455
 
-gulp.task 'test', ['build'], testNode
+gulp.task 'test', testNode

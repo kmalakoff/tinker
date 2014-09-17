@@ -27,7 +27,7 @@ class ModuleInit
         {
           type: 'list',
           name: 'url',
-          message: "Which repository url do you want to use for #{module.get('name')} (#{module.relativeDirectory(options)})?"
+          message: "Which repository service do you want to use for #{module.get('name')} (#{module.relativeDirectory(options)})?"
           choices: repositories.concat(['Skip', 'Other'])
         }
       ], (answers) ->
@@ -42,10 +42,10 @@ class ModuleInit
      {
         type: 'input',
         name: 'url',
-        message: 'Enter a repository url or type skip or leave empty to start again',
+        message: 'Enter a repository service or type skip or leave empty to start again',
         validate: (value) ->
           return true if !value or (value.toLowerCase() is 'skip') or RepoURL.isValid(value)
-          'Please enter a valid repository url'
+          'Please enter a valid repository service'
       }
     ], (answers) ->
       switch (url = answers.url).toLowerCase()

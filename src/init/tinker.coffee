@@ -29,11 +29,11 @@ class TinkerInit
 
     queue = new Queue(1)
     queue.defer (callback) -> TinkerInit.configurePackageTypes(options, callback)
-    queue.defer (callback) -> (require './repository_services')(options, callback)
+    queue.defer (callback) -> (require './servers')(options, callback)
     queue.defer (callback) -> (require './git')(options, callback)
     queue.defer (callback) ->
       console.log _.template(TEMPLATES.install)()
-      inquirer.prompt [{type: 'confirm', name: 'allow', message: "Do you want to install #{(Config.get('package_types') or []).join(' and ')} packages to start tinkering?"}
+      inquirer.prompt [{type: 'confirm', name: 'allow', message: "Do you want to install #{(Config.get('types') or []).join(' and ')} packages to start tinkering?"}
       ], (answers) ->
         return callback() unless answers.allow
         Package.cursor().include('modules').toModels (err, packages) ->
@@ -44,14 +44,14 @@ class TinkerInit
     queue.await callback
 
   @configurePackageTypes: (options, callback) ->
-    package_types = Config.get('package_types') or []
+    types = Config.get('types') or []
 
     inquirer.prompt [
       {
         type: 'checkbox',
-        name: 'package_types',
+        name: 'types',
         message: "Choose the types of packages do you want to tinker with"
-        choices: ({name: type, checked: type in package_types} for type in ['bower', 'npm'])
+        choices: ({name: type, checked: type in types} for type in ['bower', 'npm'])
         validate: (answer) -> if answer.length < 1 then 'You must choose at least package type' else true
       }
     ],

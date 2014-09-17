@@ -45,8 +45,8 @@ module.exports = class Package extends (require 'backbone').Model
     if _.size(_.pick(options, _.pluck(Package.TYPES, 'type')))
       return (type for type in Package.TYPES when not options.hasOwnProperty('type') or !!options[type])
     else
-      package_types = Config.get('package_types')
-      return _.filter(Package.TYPES, (type) -> type.type in package_types)
+      types = Config.get('types')
+      return _.filter(Package.TYPES, (type) -> type.type in types)
 
   @optionsToDirectories: (options) ->
     directory = if options.directory then path.join(process.cwd(), options.directory) else process.cwd()

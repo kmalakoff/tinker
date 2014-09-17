@@ -20,15 +20,15 @@ describe 'tinker utils @quick @core', ->
   it 'configures', (callback) ->
     queue = new Queue(1)
     queue.defer (callback) ->
-      Tinker.configure {package_types: 'npm'}, {directory: 'test/data'}, (err) ->
+      Tinker.configure {types: 'npm'}, {directory: 'test/data'}, (err) ->
         assert.ok !err
-        assert.equal Tinker.Config.get('package_types'), 'npm'
+        assert.equal Tinker.Config.get('types'), 'npm'
         callback()
 
     queue.defer (callback) ->
-      Tinker.configure ['package_types=bower'], {directory: 'test/data'}, (err) ->
+      Tinker.configure ['types=bower'], {directory: 'test/data'}, (err) ->
         assert.ok !err
-        assert.equal Tinker.Config.get('package_types'), 'bower'
+        assert.equal Tinker.Config.get('types'), 'bower'
         callback()
     queue.await callback
 

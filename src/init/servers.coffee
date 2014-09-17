@@ -18,11 +18,11 @@ class RepositoryServicesInit
     [options, callback] = [{}, options] if arguments.length is 1
 
     console.log _.template(TEMPLATES.introduction)(module)
-    console.log "Currently registered repository services: #{repository_services.join(', ')}" if (repository_services = Config.get('repository_services') or []).length
+    console.log "Currently registered repository services: #{servers.join(', ')}" if (servers = Config.get('servers') or []).length
     console.log ''
-    RepositoryServicesInit.enterRepositoryService(options, repository_services, callback)
+    RepositoryServicesInit.enterRepositoryService(options, servers, callback)
 
-  @enterRepositoryService: (options, initial_repository_services, callback) ->
+  @enterRepositoryService: (options, initial_servers, callback) ->
     inquirer.prompt [
      {
         type: 'input',name: 'url', message: 'Enter a repository service (leave empy to skip)',
@@ -33,13 +33,13 @@ class RepositoryServicesInit
     ], (answers) ->
       switch (url = answers.url).toLowerCase()
         when ''
-          if (repository_services = Config.get('repository_services') or []).length
-            console.log "Known repository services: #{repository_services.join(', ')}" if _.difference(initial_repository_services, repository_services).length
+          if (servers = Config.get('servers') or []).length
+            console.log "Known repository services: #{servers.join(', ')}" if _.difference(initial_servers, servers).length
           return callback()
         else
           console.log "Added #{url}"
-          Config.save {repository_services: _.uniq((Config.get('repository_services') or []).concat([url]))}, (err) ->
+          Config.save {servers: _.uniq((Config.get('servers') or []).concat([url]))}, (err) ->
             return callback(err) if err
-            RepositoryServicesInit.enterRepositoryService(options, initial_repository_services, callback)
+            RepositoryServicesInit.enterRepositoryService(options, initial_servers, callback)
 
 module.exports = RepositoryServicesInit.init

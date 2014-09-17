@@ -4,7 +4,7 @@ Package = null
 
 class Config extends (require './lib/fs_model')
   url: './.tinker'
-  defaults: {repository_services: [], package_types: [], modules: []}
+  defaults: {servers: [], types: [], modules: []}
 
   configByModule: (module, config) ->
     if arguments.length is 1
@@ -18,8 +18,8 @@ class Config extends (require './lib/fs_model')
   saveModuleConfig: (module, callback) -> @configByModule(module, module.toConfig()).save(callback)
 
   optionsSetPackageTypes: (options) ->
-    Package or= require './package'; package_types = @get('package_types')
-    _.defaults(_.object(Package.TYPES, ((type in package_types) for type in Package.TYPES)), options)
+    Package or= require './package'; types = @get('types')
+    _.defaults(_.object(Package.TYPES, ((type in types) for type in Package.TYPES)), options)
 
   parseArgs: (array) ->
     defaults = _.result(@, 'defaults') or {}

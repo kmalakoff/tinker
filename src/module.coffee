@@ -206,7 +206,7 @@ module.exports = class Module extends (require 'backbone').Model
           repositories = repositories.concat(_repositories)
           callback()
 
-    for repository_service in (Config.get('repository_services') or [])
+    for repository_service in (Config.get('servers') or [])
       do (repository_service) => queue.defer (callback) =>
         request.head(url = "#{repository_service}/#{@get('name')}").end (res) => repositories.push(url) if res.status is 200; callback()
 
